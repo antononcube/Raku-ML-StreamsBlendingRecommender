@@ -9,6 +9,7 @@ class SBR {
     ## Data members
     ##========================================================
     has @!SMRMatrix;
+    has %!itemInverseIndexes = %();
     has %!tagInverseIndexes = %();
     has %!tagTypeToTags = %();
     has %!globalWeights = %();
@@ -31,6 +32,9 @@ class SBR {
     ##========================================================
     method takeSMRMatrix() {
         @!SMRMatrix
+    }
+    method takeItemInverseIndexes() {
+        %!itemInverseIndexes
     }
     method takeTagInverseIndexes() {
         %!tagInverseIndexes
@@ -60,13 +64,16 @@ class SBR {
             return Nil
         }
 
+        %!itemInverseIndexes = %();
+        %!tagInverseIndexes = %();
+
         self
     }
 
     ##========================================================
-    ## Make inverse indexes
+    ## Make tag inverse indexes
     ##========================================================
-    method makeInverseIndexes() {
+    method makeTagInverseIndexes() {
 
         ## Split into a hash by tag type.
         my %inverseIndexGroups = @!SMRMatrix.classify({ $_<TagType> });
@@ -76,32 +83,102 @@ class SBR {
 
         ## Re-make each array of hashes into a hash.
         %inverseIndexesPerTagType =
-                %inverseIndexesPerTagType.pairs.map({ $_.key => $_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight> })) }) });
+                %inverseIndexesPerTagType.pairs.map({ $_.key => $_.value.pairs.map({ $_.key => Mix($_.value
+                        .map({ $_<Item> => $_<Weight> })) }) });
 
         ## Make it a hash of hashes of mixes.
         %inverseIndexesPerTagType =
                 Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ Hash($_) }));
 
-        ## Derive the tag type to tags hash map
+        ## Derive the tag type to tags hash map.
         %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys }));
 
         ## Flatten the inverse index groups.
         %!tagInverseIndexes = %();
         for %inverseIndexesPerTagType.values -> %h { %!tagInverseIndexes.append(%h) };
 
+        ## We make sure item inverse indexes are empty.
+        %!itemInverseIndexes = %();
+
         self
     }
 
     ##========================================================
-    ## Recommend by profile array
+    ## Transpose tag inverse indexes
+    ##========================================================
+    method transposeTagInverseIndexes() {
+
+        ## Transpose tag inverse indexes into item inverse indexes.
+
+        my $items = %!tagInverseIndexes.values>>.keys.flat.unique;
+
+        %!itemInverseIndexes = Hash($items Z=> Mix());
+
+        for %!tagInverseIndexes.kv -> $tag, $mix {
+            for $mix.kv -> $item, $val {
+                %!itemInverseIndexes{$item}.push($tag => $val)
+            }
+        }
+
+        %!itemInverseIndexes = do for %!itemInverseIndexes.kv -> $item, $arr { $item => Mix($arr) };
+
+        self
+    }
+
+    ##========================================================
+    ## Profile
+    ##========================================================
+    multi method profile(@items) {
+        self.profile(Mix(@items))
+    }
+
+    multi method profile(Mix:D $items) {
+
+        my $itemsQuery = Mix($items);
+
+        my %itemMixes = Bag.new;
+        my $found = False;
+
+        if %!itemInverseIndexes.elems == 0 { self.transposeTagInverseIndexes() }
+
+        for $itemsQuery.keys -> $k {
+            if %!itemInverseIndexes{$k}:exists {
+                $found = True;
+                %itemMixes = %!itemInverseIndexes{$k} <<*>> $itemsQuery{$k} (+) %itemMixes
+            }
+        };
+
+        if not $found {
+            warn 'All history items are unknown in the recommender.';
+            %!value = %();
+            return self
+        }
+
+        my @res = %itemMixes.sort(-*.value);
+
+        %!value = @res;
+
+        self
+    }
+
+    ##========================================================
+    ## Recommend by history
+    ##========================================================
+    multi method recommend(@items, Int:D $nrecs = 12) {
+        self.recommend(Mix(@items), $nrecs)
+    }
+
+    multi method recommend(Mix:D $items, Int:D $nrecs = 12) {
+        self.recommendByProfile( Mix(self.profile($items).takeValue), $nrecs)
+    }
+
+    ##========================================================
+    ## Recommend by profile
     ##========================================================
     multi method recommendByProfile(@prof, Int:D $nrecs = 12) {
         self.recommendByProfile(Mix(@prof), $nrecs)
     }
 
-    ##========================================================
-    ## Recommend by profile mix
-    ##========================================================
     multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12) {
 
         my $profQuery = Mix($prof);
@@ -150,7 +227,7 @@ class SBR {
     ##========================================================
     method normalizePerTagType($normSpec) {
 
-        ## Find norms per tag type
+        ## Find norms per tag type.
         my %norms =
                 do for %!tagTypeToTags.kv -> $k, $v {
                     my @tags = $v>>.values.flat;
@@ -158,17 +235,18 @@ class SBR {
                     $k => $norm
                 };
 
-        say "%norms = ", %norms;
-
-        ## Invert tag type to tag hash
+        ## Invert tag type to tag hash.
         my %tagToTagType = %!tagTypeToTags.invert;
 
-        ## Normalize
+        ## Normalize.
         %!tagInverseIndexes =
                 do for %!tagInverseIndexes.kv -> $k, $v {
                     my $norm = %norms{%tagToTagType{$k}};
                     $k => $v <</>> ($norm > 0 ?? $norm !! 1)
                 }
+
+        ## We make sure item inverse indexes are empty.
+        %!itemInverseIndexes = %();
 
         self
     }
@@ -181,24 +259,24 @@ class SBR {
         ## Instead of working with combined keys (tagType item)
         ## we loop over the tag types.
 
-        ## Loop over tag types
+        ## Loop over tag types.
         my %res = %();
         for %!tagTypeToTags.kv -> $k, $v {
 
-            # Get the items values from the tag inverse indexes
+            # Get the items values from the tag inverse indexes.
             my %itemValues = %();
             for %!tagInverseIndexes{|$v}.kv -> $tag, $mix {
                 %itemValues.push($mix.pairs);
             }
 
-            ## Calculate norms per item
+            ## Calculate norms per item.
             my %itemNorms =
                     do for %itemValues.kv -> $item, $vals {
                         my $norm = self.norm(Array($vals), $normSpec);
                         $item => $norm > 0 ?? $norm !! 1
                     }
 
-            ## For each tag normalize the item values
+            ## For each tag normalize the item values.
             my %tagRes =
                     do for |$v -> $tag {
                         my %mix = %!tagInverseIndexes{$tag};
@@ -210,6 +288,9 @@ class SBR {
 
         %!tagInverseIndexes = %res;
 
+        ## We make sure item inverse indexes are empty.
+        %!itemInverseIndexes = %();
+
         self
     }
 
@@ -218,12 +299,15 @@ class SBR {
     ##========================================================
     method normalizePerTag($normSpec) {
 
-        ## Normalize
+        ## Normalize.
         %!tagInverseIndexes =
                 do for %!tagInverseIndexes.kv -> $k, $v {
                     my $norm = self.norm($v.values, $normSpec);
                     $k => $v <</>> ($norm > 0 ?? $norm !! 1)
                 }
+
+        ## We make sure item inverse indexes are empty.
+        %!itemInverseIndexes = %();
 
         self
     }
@@ -233,11 +317,14 @@ class SBR {
     ##========================================================
     method unitize() {
 
-        ## Unitize
+        ## Unitize.
         %!tagInverseIndexes =
                 do for %!tagInverseIndexes.kv -> $k, $v {
                     $k => Mix($v.keys)
                 }
+
+        ## We make sure item inverse indexes are empty.
+        %!itemInverseIndexes = %();
 
         self
     }
