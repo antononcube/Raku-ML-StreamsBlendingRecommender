@@ -5,29 +5,67 @@ use Text::CSV;
 ## Monadic-like definition.
 class SBR {
 
+    ##========================================================
     ## Data members
+    ##========================================================
     has @!SMRMatrix;
-    has %!inverseIndexes = %();
+    has %!tagInverseIndexes = %();
+    has %!tagTypeToTags = %();
+    has %!globalWeights = %();
     has %!value;
 
+    ##========================================================
     ## Setters
-    method setSMRMatrix( @arg ) { @!SMRMatrix = @arg; self }
+    ##========================================================
+    method setSMRMatrix(@arg) {
+        @!SMRMatrix = @arg;
+        self
+    }
+    method setGlobalWeights(%arg) {
+        %!globalWeights = %arg;
+        self
+    }
 
+    ##========================================================
     ## Takers
-    method takeSMRMatrix() { @!SMRMatrix }
-    method takeInverseIndexes() { %!inverseIndexes }
-    method takeValue() { %!value }
+    ##========================================================
+    method takeSMRMatrix() {
+        @!SMRMatrix
+    }
+    method takeTagInverseIndexes() {
+        %!tagInverseIndexes
+    }
+    method takeTagTypeToTags() {
+        %!tagTypeToTags
+    }
+    method takeGlobalWeights() {
+        %!globalWeights
+    }
+    method takeValue() {
+        %!value
+    }
 
-    ## Ingest a CSV file
-    method ingestCSVFile(Str $fileName) {
+    ##========================================================
+    ## Ingest a SMR matrix CSV file
+    ##========================================================
+    method ingestSMRMatrixCSVFile(Str $fileName) {
 
         my $csv = Text::CSV.new;
         @!SMRMatrix = $csv.csv(in => $fileName, headers => "auto");
 
+        my @expectedColumnNames = <Item TagType Value Weight>;
+
+        if (@!SMRMatrix[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
+            warn 'The ingested CSV file does not have column names:', @expectedColumnNames, '.';
+            return Nil
+        }
+
         self
     }
 
+    ##========================================================
     ## Make inverse indexes
+    ##========================================================
     method makeInverseIndexes() {
 
         ## Split into a hash by tag type.
@@ -44,41 +82,37 @@ class SBR {
         %inverseIndexesPerTagType =
                 Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ Hash($_) }));
 
+        ## Derive the tag type to tags hash map
+        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys }));
+
         ## Flatten the inverse index groups.
-        %!inverseIndexes = %();
-        for %inverseIndexesPerTagType.values -> %h { %!inverseIndexes.append(%h) };
+        %!tagInverseIndexes = %();
+        for %inverseIndexesPerTagType.values -> %h { %!tagInverseIndexes.append(%h) };
 
         self
     }
 
+    ##========================================================
     ## Recommend by profile array
-    multi method recommendByProfile( @prof, Int:D $nrecs = 12) {
+    ##========================================================
+    multi method recommendByProfile(@prof, Int:D $nrecs = 12) {
         self.recommendByProfile(Mix(@prof), $nrecs)
     }
 
+    ##========================================================
     ## Recommend by profile mix
+    ##========================================================
     multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12) {
 
-        ## This initial version might be potentially slow.
-        # my $knownTags = $prof.keys (&) %!inverseIndexes.keys;
-        #
-        # if $knownTags.elems == 0 {
-        #            warn 'All profile tags are unknown in the recommender.';
-        #            %!value = %();
-        #            return self
-        # }
-        #
-        # my $profQuery = Mix( $prof{ $knownTags.keys }:p );
-
-        my $profQuery = Mix( $prof );
+        my $profQuery = Mix($prof);
 
         my %profMixes = Bag.new;
         my $found = False;
 
         for $profQuery.keys -> $k {
-            if %!inverseIndexes{$k}:exists {
+            if %!tagInverseIndexes{$k}:exists {
                 $found = True;
-                %profMixes = %!inverseIndexes{$k} <<*>> $profQuery{$k} (+) %profMixes
+                %profMixes = %!tagInverseIndexes{$k} <<*>> $profQuery{$k} (+) %profMixes
             }
         };
 
@@ -91,6 +125,167 @@ class SBR {
         my @res = %profMixes.sort(-*.value);
 
         %!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
+
+        self
+    }
+
+    ##========================================================
+    ## Norm
+    ##========================================================
+    multi method norm(Associative $mix, Str $spec = "euclidean") {
+        self.norm($mix.values, $spec)
+    }
+
+    multi method norm(@vec, Str $spec = 'euclidean') {
+        given $spec {
+            when $_ (elem) <max-norm inf-norm inf infinity> { @vec.map({ abs($_) }).max }
+            when $_ (elem) <one-norm one sum> { @vec.map({ abs($_) }).sum }
+            when $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
+            default { die "Unknwon norm specification '$spec'."; }
+        }
+    }
+
+    ##========================================================
+    ## Normalize per tag type
+    ##========================================================
+    method normalizePerTagType($normSpec) {
+
+        ## Find norms per tag type
+        my %norms =
+                do for %!tagTypeToTags.kv -> $k, $v {
+                    my @tags = $v>>.values.flat;
+                    my $norm = self.norm(%!tagInverseIndexes{@tags}>>.values.flat, $normSpec);
+                    $k => $norm
+                };
+
+        say "%norms = ", %norms;
+
+        ## Invert tag type to tag hash
+        my %tagToTagType = %!tagTypeToTags.invert;
+
+        ## Normalize
+        %!tagInverseIndexes =
+                do for %!tagInverseIndexes.kv -> $k, $v {
+                    my $norm = %norms{%tagToTagType{$k}};
+                    $k => $v <</>> ($norm > 0 ?? $norm !! 1)
+                }
+
+        self
+    }
+
+    ##========================================================
+    ## Normalize per tag type per item
+    ##========================================================
+    method normalizePerTagTypePerItem($normSpec) {
+
+        ## Instead of working with combined keys (tagType item)
+        ## we loop over the tag types.
+
+        ## Loop over tag types
+        my %res = %();
+        for %!tagTypeToTags.kv -> $k, $v {
+
+            # Get the items values from the tag inverse indexes
+            my %itemValues = %();
+            for %!tagInverseIndexes{|$v}.kv -> $tag, $mix {
+                %itemValues.push($mix.pairs);
+            }
+
+            ## Calculate norms per item
+            my %itemNorms =
+                    do for %itemValues.kv -> $item, $vals {
+                        my $norm = self.norm(Array($vals), $normSpec);
+                        $item => $norm > 0 ?? $norm !! 1
+                    }
+
+            ## For each tag normalize the item values
+            my %tagRes =
+                    do for |$v -> $tag {
+                        my %mix = %!tagInverseIndexes{$tag};
+                        $tag => Mix(%mix.keys Z=> %mix.values <</>> %itemNorms{|%mix.keys})
+                    }
+
+            %res.append(%tagRes)
+        }
+
+        %!tagInverseIndexes = %res;
+
+        self
+    }
+
+    ##========================================================
+    ## Normalize per tag
+    ##========================================================
+    method normalizePerTag($normSpec) {
+
+        ## Normalize
+        %!tagInverseIndexes =
+                do for %!tagInverseIndexes.kv -> $k, $v {
+                    my $norm = self.norm($v.values, $normSpec);
+                    $k => $v <</>> ($norm > 0 ?? $norm !! 1)
+                }
+
+        self
+    }
+
+    ##========================================================
+    ## Unitize
+    ##========================================================
+    method unitize() {
+
+        ## Unitize
+        %!tagInverseIndexes =
+                do for %!tagInverseIndexes.kv -> $k, $v {
+                    $k => Mix($v.keys)
+                }
+
+        self
+    }
+
+    ##========================================================
+    ## Global weights
+    ##========================================================
+    method globalWeights($spec) {
+
+        my %colSums = Hash(%!tagInverseIndexes.keys Z=> %!tagInverseIndexes.values>>.total);
+        %colSums = %colSums.deepmap({ $_ > 0 ?? $_ !! $_ });
+
+        my $nrows = %!tagInverseIndexes.values>>.keys.flat.unique.elems;
+
+        ## Main switch
+        given $spec {
+            when 'IDF' {
+                %!globalWeights = %colSums.deepmap({ log($nrows / $_) })
+            }
+
+            when 'GFIDF' {
+                die "Global weights specification 'GFIDF' is not implemented."
+            }
+
+            when 'Normal' {
+                %!globalWeights =
+                        do for %!tagInverseIndexes.kv -> $k, $v {
+                            my $norm = self.norm($v.values, 'euclidean');
+                            $k => 1 <</>> ($norm > 0 ?? $norm !! 1)
+                        }
+            }
+
+            when $_ (elem) <Binary None> {
+                %!globalWeights = Hash(%!tagInverseIndexes.keys Z=> 1.roll(%!tagInverseIndexes.elems))
+            }
+
+            when $_ (elem) <ColumnStochastic Sum> {
+                %!globalWeights = %colSums.deepmap({ 1 / $_ })
+            }
+
+            when 'Entropy' {
+                die "Global weights specification 'Entropy' is not implemented."
+            }
+
+            default {
+                die "Unknown global weights specification $spec."
+            }
+        }
 
         self
     }
