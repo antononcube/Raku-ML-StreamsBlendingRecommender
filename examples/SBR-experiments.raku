@@ -20,4 +20,8 @@ say '$sbrObj.takeInverseIndexes.keys = ', $sbrObj.takeInverseIndexes.keys;
 
 #say $sbrObj.recommendByProfile( <male 1st survived>, 12 ).takeValue;
 
-say $sbrObj.recommendByProfile( ["male", "1st", "survived"], 12 ).takeValue;
+say $sbrObj.recommendByProfile( ["male0", "1st0", "survived0"], 12 ).takeValue;
+
+say "-" x 30;
+
+say $sbrObj.recommendByProfile( Mix( '1st' => 1.2, 'survived' => 1, 'male' => 1.1 ), 12 ).takeValue;
