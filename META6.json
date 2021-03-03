@@ -1,0 +1,29 @@
+{
+  "perl": "6.d",
+  "name": "ML::StreamsBlendingRecommender",
+  "api": "1",
+  "auth": "github:antononcube",
+  "version": "0.1.0",
+  "description": "Streams blending recommender framework.",
+  "authors": [
+    "Anton Antonov"
+  ],
+  "license": "GPL-3.0-or-later",
+  "provides": {
+    "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
+    "ML::StreamsBlendingRecommender::SBR": "lib/ML/StreamsBlendingRecommender/SBR.rakumod"
+  },
+  "depends": [
+    "DSL::Shared"
+  ],
+  "build-depends": [],
+  "test-depends": [],
+  "resources": [],
+  "tags": [
+    "ML",
+    "machine learning",
+    "recommendations",
+    "recommender"
+  ],
+  "source-url": "https://github.com/antononcube/Raku-ML-StreamsBlendingRecommender.git"
+}
