@@ -18,6 +18,8 @@ say "Size of CSV file records:", @dfSMRMatrix.elems;
 
 say @dfSMRMatrix[1..5];
 
+say @dfSMRMatrix>><Weight>;
+
 ##===========================================================
 say "=" x 30;
 say "Group by the tag type and show lengths:";
@@ -78,6 +80,7 @@ say "Recommendations by profile:";
 say "=" x 30;
 
 my $prof = Mix( '1st' => 1.2, 'survived' => 1, 'male' => 1.1 );
+say '$prof = ', $prof;
 
 #my %profMixes = %inverseIndexes{ $prof.keys };
 
