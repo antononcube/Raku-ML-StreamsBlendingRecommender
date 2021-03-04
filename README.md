@@ -2,51 +2,35 @@
 
 Raku implementation of a Streams Blending Recommender (SBR) framework.
 
-Based on the article [AA1].
+Generally speaking, SBR is "computer scientist" implementation of a recommendation system
+based on sparse linear algebra. See the article [AA1] for details.
 
-## TODO
+This implementation is loosely based on the software monads 
+[SMRMon-WL](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicSparseMatrixRecommender.m) 
+and
+[SMRMon-R](https://github.com/antononcube/R-packages/tree/master/SMRMon-R).
 
-- [ ] LSA-FE (Latent Semantic Analysis Feature Extractor) that inherits SBR
-
-- [ ] Application of the Composite Design Pattern
-
-- [ ] Parameters for specifying which columns to expect in data ingestion
-
-- [ ] More extensive results verification and failure management
-
-- [ ] Adverbs for methods
-   
-  - [ ] Should the object be returned, or the computation result?
-  - [ ] Should the recommendation results be normalized or not?  
-  
-- [ ] Unit tests
-
-  - [ ] Decide which/what data to use
-  - [ ] Data ingestion tests
-  - [ ] Core functionalities tests
-  - [ ] Normalization tests
-  - [ ] Annexing of recommenders tests
-  - [ ] Composite SBR tests  
-    
-- [ ] Annex method
- 
-   - [ ] For another SBR object
-   - [ ] For a collection of inverse indexes
-    
-- [ ] Class and method pod6 documentation
-
-- [ ] Full-blown documentation of recomemndations computation using hash maps (Raku `Mix`es)
-
-  - [ ] Decide on example data
-  - [ ] Core algorithm
-  - [ ] LSA topic extraction
-  - [ ] Merging of results from different recommenders
-
+See the org-mode file 
+["Work-plan.org"](./org/Work-plan.org)
+for detailed status (including a TODO list.)
 
 ## References
+
+### Articles
 
 [AA1] Anton Antonov, 
 ["Mapping Sparse Matrix Recommender to Streams Blending Recommender"](https://github.com/antononcube/MathematicaForPrediction/tree/master/Documentation/MappingSMRtoSBR), 
 (2019),
-[GitHub/antononcube](https://github.com/antononcube)
+[GitHub/antononcube](https://github.com/antononcube).
 
+### Packages, repositories
+
+[AAp1] Anton Antonov,
+[Monadic Sparse Matrix Recommender Mathematica package](https://github.com/antononcube/MathematicaForPrediction/blob/master/MonadicProgramming/MonadicSparseMatrixRecommender.m),
+(2018),
+[GitHub/antononcube](https://github.com/antononcube/).
+
+[AAp2] Anton Antonov,
+[Sparse Matrix Recommender Monad R packages](https://github.com/antononcube/R-packages/tree/master/SMRMon-R),
+(2018),
+[R-packages at GitHub/antononcube](https://github.com/antononcube/R-packages).
