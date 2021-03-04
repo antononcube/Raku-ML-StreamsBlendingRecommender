@@ -1,12 +1,12 @@
 #!/usr/bin/env perl6
 use lib './lib';
 use lib '.';
-use ML::StreamsBlendingRecommender::SBR;
+use ML::StreamsBlendingRecommender::CoreSBR;
 
 ##===========================================================
 my $fileName = "/Users/antonov/R/StreamsBlendingRecommender/output/dfSMRMatrixTitanic.csv";
 
-my $sbrObj = SBR.new;
+my $sbrObj = ML::StreamsBlendingRecommender::CoreSBR.new;
 
 $sbrObj.ingestSMRMatrixCSVFile($fileName);
 
@@ -34,8 +34,8 @@ my $resKeys = %recs.grep( *.value > 3 ).sort( *.key ).hash.keys.sort;
 
 say '|$resKeys|: ', $resKeys.elems, ' $resKeys:', $resKeys;
 
-say SBR.norm(%recs.values, 'euclidean');
-say SBR.norm(%recs.values, 'one');
-say SBR.norm(%recs.values, 'inf');
+say ML::StreamsBlendingRecommender::CoreSBR.norm(%recs.values, 'euclidean');
+say ML::StreamsBlendingRecommender::CoreSBR.norm(%recs.values, 'one');
+say ML::StreamsBlendingRecommender::CoreSBR.norm(%recs.values, 'inf');
 
 # say SBR.norm(%recs.values, 'irer');
