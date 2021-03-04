@@ -1,0 +1,47 @@
+
+* Introduction
+- This org-mode file has work plan / status for the Raku package
+  [[https://github.com/antononcube/Raku-ML-StreamsBlendingRecommender][ML::StreamsBlendingRecommender]].
+- The central class is names ~SBR~ (Streams Blending Recommender).
+* Work plan [%] [/]
+** TODO Annex method
+   - [ ] For another SBR object
+   - [ ] For a collection of inverse indexes
+** TODO LSA-FE 
+- (Latent Semantic Analysis Feature Extractor) that inherits SBR
+** TODO Application of the Composite Design Pattern
+- [ ] Abstract class ~AbstractSBR~
+- [X] Concrete class ~SBR~
+- [ ] Concrete class ~LSA-FE~
+- [ ] Composite class ~CompositeSBR~
+  - [ ] Decide which data structure to use for the collection of SBR
+    objects.
+  - [ ] ~add~
+  - [ ] ~remove~
+  - [ ] ~get~
+  - [ ] ~recommend~
+    - Different methods of merging recommendations results
+  - [ ] ~recommendByProfile~
+    - Different methods of merging recommendations results
+** TODO Parameters for specifying which columns to expect in data ingestion
+** TODO More extensive results verification and failure management
+** TODO Adverbs for methods [%]
+  - [ ] Should the object be returned, or the computation result?
+  - [ ] Should the recommendation results be normalized or not?
+** TODO Unit tests [%] [/]
+  - [ ] Decide which/what data to use
+  - [ ] Data ingestion tests
+  - [ ] Core functionalities tests
+  - [ ] Normalization tests
+  - [ ] Annexing of recommenders tests
+  - [ ] Composite SBR tests
+** TODO Class and method pod6 documentation [%][/]
+- [ ] SBR
+- [ ] Composite
+- [ ] LSE-FE 
+** TODO Documentation [%] [/]
+- Full-blown documentation of recomemndations computation using hash maps (Raku `Mix`es).
+- [ ] Decide on example data
+- [ ] Core algorithm
+- [ ] LSA topic extraction
+- [ ] Merging of results from different recommenders
