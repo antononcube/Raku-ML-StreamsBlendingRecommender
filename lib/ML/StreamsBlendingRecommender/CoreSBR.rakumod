@@ -3,7 +3,7 @@ use v6;
 use Text::CSV;
 
 ## Monadic-like definition.
-class SBR {
+class ML::StreamsBlendingRecommender::CoreSBR {
 
     ##========================================================
     ## Data members
@@ -52,10 +52,10 @@ class SBR {
     ##========================================================
     ## Ingest a SMR matrix CSV file
     ##========================================================
-    method ingestSMRMatrixCSVFile(Str $fileName) {
+    method ingestSMRMatrixCSVFile(Str $fileName, Bool :$make = False, Bool :$object = True) {
 
         my $csv = Text::CSV.new;
-        @!SMRMatrix = $csv.csv(in => $fileName, headers => "auto");
+        @!SMRMatrix = $csv.csv(in => $fileName, headers => 'auto');
 
         my @expectedColumnNames = <Item TagType Value Weight>;
 
@@ -67,13 +67,15 @@ class SBR {
         %!itemInverseIndexes = %();
         %!tagInverseIndexes = %();
 
-        self
+        self.makeTagInverseIndexes() when $make;
+
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Make tag inverse indexes
     ##========================================================
-    method makeTagInverseIndexes() {
+    method makeTagInverseIndexes(Bool :$object = True) {
 
         ## Split into a hash by tag type.
         my %inverseIndexGroups = @!SMRMatrix.classify({ $_<TagType> });
@@ -100,13 +102,13 @@ class SBR {
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        self
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Transpose tag inverse indexes
     ##========================================================
-    method transposeTagInverseIndexes() {
+    method transposeTagInverseIndexes(Bool :$object = True) {
 
         ## Transpose tag inverse indexes into item inverse indexes.
 
@@ -122,29 +124,31 @@ class SBR {
 
         %!itemInverseIndexes = do for %!itemInverseIndexes.kv -> $item, $arr { $item => Mix($arr) };
 
-        self
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Profile
     ##========================================================
-    multi method profile(@items) {
-        self.profile(Mix(@items))
+    multi method profile(@items, Bool :$normalize = False, Bool :$object = True) {
+        self.profile(Mix(@items), :$normalize, :$object)
     }
 
-    multi method profile(Mix:D $items) {
+    multi method profile(Mix:D $items, Bool :$normalize = False, Bool :$object = True) {
 
         my $itemsQuery = Mix($items);
 
-        my %itemMixes = Bag.new;
+        my %itemMix = Bag.new;
         my $found = False;
 
+        ## Transpose inverse indexes if needed
         if %!itemInverseIndexes.elems == 0 { self.transposeTagInverseIndexes() }
 
+        ## Compute the profile
         for $itemsQuery.keys -> $k {
             if %!itemInverseIndexes{$k}:exists {
                 $found = True;
-                %itemMixes = %!itemInverseIndexes{$k} <<*>> $itemsQuery{$k} (+) %itemMixes
+                %itemMix = %!itemInverseIndexes{$k} <<*>> $itemsQuery{$k} (+) %itemMix
             }
         };
 
@@ -154,42 +158,48 @@ class SBR {
             return self
         }
 
-        my @res = %itemMixes.sort(-*.value);
+        ## Normalize
+        if $normalize { %itemMix = self.normalize(%itemMix, 'max-norm') }
 
+        ## Sort
+        my @res = %itemMix.sort(-*.value);
+
+        ## Result
         %!value = @res;
 
-        self
+        if $object { self } else { @res }
     }
 
     ##========================================================
     ## Recommend by history
     ##========================================================
-    multi method recommend(@items, Int:D $nrecs = 12) {
-        self.recommend(Mix(@items), $nrecs)
+    multi method recommend(@items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
+        self.recommend(Mix(@items), $nrecs, :$normalize, :$object)
     }
 
-    multi method recommend(Mix:D $items, Int:D $nrecs = 12) {
-        self.recommendByProfile( Mix(self.profile($items).takeValue), $nrecs)
+    multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
+        self.recommendByProfile( Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object)
     }
 
     ##========================================================
     ## Recommend by profile
     ##========================================================
-    multi method recommendByProfile(@prof, Int:D $nrecs = 12) {
-        self.recommendByProfile(Mix(@prof), $nrecs)
+    multi method recommendByProfile(@prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
+        self.recommendByProfile(Mix(@prof), $nrecs, :$normalize, :$object)
     }
 
-    multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12) {
+    multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
 
         my $profQuery = Mix($prof);
 
-        my %profMixes = Bag.new;
+        my %profMix = Bag.new;
         my $found = False;
 
+        ## Compute recommendations
         for $profQuery.keys -> $k {
             if %!tagInverseIndexes{$k}:exists {
                 $found = True;
-                %profMixes = %!tagInverseIndexes{$k} <<*>> $profQuery{$k} (+) %profMixes
+                %profMix = %!tagInverseIndexes{$k} <<*>> $profQuery{$k} (+) %profMix
             }
         };
 
@@ -199,11 +209,16 @@ class SBR {
             return self
         }
 
-        my @res = %profMixes.sort(-*.value);
+        ## Normalize
+        if $normalize { %profMix = self.normalize(%profMix, 'max-norm') }
 
+        ## Sort
+        my @res = %profMix.sort(-*.value);
+
+        ## Result
         %!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
 
-        self
+        if $object { self } else { %!value }
     }
 
     ##========================================================
@@ -218,14 +233,27 @@ class SBR {
             when $_ (elem) <max-norm inf-norm inf infinity> { @vec.map({ abs($_) }).max }
             when $_ (elem) <one-norm one sum> { @vec.map({ abs($_) }).sum }
             when $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
-            default { die "Unknwon norm specification '$spec'."; }
+            default { die "Unknown norm specification '$spec'."; }
         }
+    }
+
+    sub safeInversion(Numeric $n) { $n == 0 ?? 1 !! 1 / $n }
+
+    ##========================================================
+    ## Normalize
+    ##========================================================
+    multi method normalize(Associative $mix, Str $spec = "euclidean") {
+        $mix <<*>> safeInversion(self.norm($mix, $spec))
+    }
+
+    multi method normalize(@vec, Str $spec = 'euclidean') {
+        @vec <<*>> safeInversion(self.norm(@vec, $spec))
     }
 
     ##========================================================
     ## Normalize per tag type
     ##========================================================
-    method normalizePerTagType($normSpec) {
+    method normalizePerTagType($normSpec, Bool :$object = True) {
 
         ## Find norms per tag type.
         my %norms =
@@ -248,13 +276,13 @@ class SBR {
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        self
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Normalize per tag type per item
     ##========================================================
-    method normalizePerTagTypePerItem($normSpec) {
+    method normalizePerTagTypePerItem($normSpec, Bool :$object = True) {
 
         ## Instead of working with combined keys (tagType item)
         ## we loop over the tag types.
@@ -291,13 +319,13 @@ class SBR {
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        self
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Normalize per tag
     ##========================================================
-    method normalizePerTag($normSpec) {
+    method normalizePerTag($normSpec, Bool :$object = True) {
 
         ## Normalize.
         %!tagInverseIndexes =
@@ -309,13 +337,13 @@ class SBR {
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        self
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Unitize
     ##========================================================
-    method unitize() {
+    method unitize(Bool :$object = True) {
 
         ## Unitize.
         %!tagInverseIndexes =
@@ -326,13 +354,13 @@ class SBR {
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        self
+        if $object { self } else { True }
     }
 
     ##========================================================
     ## Global weights
     ##========================================================
-    method globalWeights($spec) {
+    method globalWeights($spec, Bool :$object = True) {
 
         my %colSums = Hash(%!tagInverseIndexes.keys Z=> %!tagInverseIndexes.values>>.total);
         %colSums = %colSums.deepmap({ $_ > 0 ?? $_ !! $_ });
@@ -374,7 +402,7 @@ class SBR {
             }
         }
 
-        self
+        if $object { self } else { %!globalWeights }
     }
 
 }
