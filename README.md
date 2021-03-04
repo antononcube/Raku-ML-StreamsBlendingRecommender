@@ -4,7 +4,7 @@ Raku implementation of a Streams Blending Recommender (SBR) framework.
 
 Based on the article [AA1].
 
-# TODO
+## TODO
 
 - [ ] LSA-FE (Latent Semantic Analysis Feature Extractor) that inherits SBR
 
@@ -35,7 +35,12 @@ Based on the article [AA1].
     
 - [ ] Class and method pod6 documentation
 
-- [ ]  
+- [ ] Full-blown documentation of recomemndations computation using hash maps (Raku `Mix`es)
+
+  - [ ] Decide on example data
+  - [ ] Core algorithm
+  - [ ] LSA topic extraction
+  - [ ] Merging of results from different recommenders
 
 
 ## References
