@@ -13,6 +13,8 @@ class ML::StreamsBlendingRecommender::CoreSBR {
     has %!tagInverseIndexes = %();
     has %!tagTypeToTags = %();
     has %!globalWeights = %();
+    has Set $!knownTags = set();
+    has Set $!knownItems = set();
     has %!value;
 
     ##========================================================
@@ -60,7 +62,7 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         my @expectedColumnNames = <Item TagType Value Weight>;
 
         if (@!SMRMatrix[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
-            warn 'The ingested CSV file does not have column names:', @expectedColumnNames, '.';
+            warn 'The ingested CSV file does not have column names:', @expectedColumnNames.join(', '), '.';
             return Nil
         }
 
@@ -99,6 +101,10 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         %!tagInverseIndexes = %();
         for %inverseIndexesPerTagType.values -> %h { %!tagInverseIndexes.append(%h) };
 
+        ## Assign known tags.
+        say (%!tagInverseIndexes.keys).Set;
+        $!knownTags = (%!tagInverseIndexes.keys).Set;
+
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
@@ -124,6 +130,9 @@ class ML::StreamsBlendingRecommender::CoreSBR {
 
         %!itemInverseIndexes = do for %!itemInverseIndexes.kv -> $item, $arr { $item => Mix($arr) };
 
+        ## Assign known items.
+        $!knownItems = Set(%!itemInverseIndexes.keys);
+
         if $object { self } else { True }
     }
 
@@ -136,33 +145,30 @@ class ML::StreamsBlendingRecommender::CoreSBR {
 
     multi method profile(Mix:D $items, Bool :$normalize = False, Bool :$object = True) {
 
-        my $itemsQuery = Mix($items);
-
-        my %itemMix = Bag.new;
-        my $found = False;
-
         ## Transpose inverse indexes if needed
         if %!itemInverseIndexes.elems == 0 { self.transposeTagInverseIndexes() }
 
-        ## Compute the profile
-        for $itemsQuery.keys -> $k {
-            if %!itemInverseIndexes{$k}:exists {
-                $found = True;
-                %itemMix = %!itemInverseIndexes{$k} <<*>> $itemsQuery{$k} (+) %itemMix
-            }
-        };
+        ## Make sure items are known
+        my $itemsQuery = Mix($items{($items (&) $!knownItems).keys}:p);
 
-        if not $found {
-            warn 'All history items are unknown in the recommender.';
+        if $itemsQuery.elems == 0 {
+            warn 'None of the items is known in the recommender.';
             %!value = %();
-            return self
+            return do if $object { self } else { %!value }
         }
+
+        if $itemsQuery.elems < $items.elems {
+            warn 'Some of the items are unknown in the recommender.';
+        }
+
+        ## Compute the profile
+        my %itemMix = [(+)] %!itemInverseIndexes{$itemsQuery.keys} Z<<*>> $itemsQuery.values;
 
         ## Normalize
         if $normalize { %itemMix = self.normalize(%itemMix, 'max-norm') }
 
         ## Sort
-        my @res = %itemMix.sort(-*.value);
+        my @res = %itemMix.sort({-$_.value});
 
         ## Result
         %!value = @res;
@@ -178,7 +184,8 @@ class ML::StreamsBlendingRecommender::CoreSBR {
     }
 
     multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
-        self.recommendByProfile( Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object)
+        ## It is not fast, but it is just easy to compute the profile and call recommendByProfile.
+        self.recommendByProfile(Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object)
     }
 
     ##========================================================
@@ -190,30 +197,27 @@ class ML::StreamsBlendingRecommender::CoreSBR {
 
     multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
 
-        my $profQuery = Mix($prof);
+        ## Make sure tags are known
+        my $profQuery = Mix($prof{($prof (&) $!knownTags).keys}:p);
 
-        my %profMix = Bag.new;
-        my $found = False;
+        if $profQuery.elems == 0 {
+            warn 'None of the profile tags is known in the recommender.';
+            %!value = %();
+            return do if $object { self } else { %!value }
+        }
+
+        if $profQuery.elems < $prof.elems {
+            warn 'Some of the profile tags are unknown in the recommender.';
+        }
 
         ## Compute recommendations
-        for $profQuery.keys -> $k {
-            if %!tagInverseIndexes{$k}:exists {
-                $found = True;
-                %profMix = %!tagInverseIndexes{$k} <<*>> $profQuery{$k} (+) %profMix
-            }
-        };
-
-        if not $found {
-            warn 'All profile tags are unknown in the recommender.';
-            %!value = %();
-            return self
-        }
+        my %profMix = [(+)] %!tagInverseIndexes{$profQuery.keys} Z<<*>> $profQuery.values;
 
         ## Normalize
         if $normalize { %profMix = self.normalize(%profMix, 'max-norm') }
 
         ## Sort
-        my @res = %profMix.sort(-*.value);
+        my @res = %profMix.sort({ -$_.value });
 
         ## Result
         %!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
@@ -237,7 +241,9 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         }
     }
 
-    sub safeInversion(Numeric $n) { $n == 0 ?? 1 !! 1 / $n }
+    sub safeInversion(Numeric $n) {
+        $n == 0 ?? 1 !! 1 / $n
+    }
 
     ##========================================================
     ## Normalize
