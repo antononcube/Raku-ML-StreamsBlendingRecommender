@@ -11,15 +11,21 @@
   "license": "GPL-3.0-or-later",
   "provides": {
     "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
-    "ML::StreamsBlendingRecommender::SBR": "lib/ML/StreamsBlendingRecommender/SBR.rakumod"
+    "ML::StreamsBlendingRecommender::CoreSBR": "lib/ML/StreamsBlendingRecommender/CoreSBR.rakumod",
+    "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod"
   },
   "depends": [
     "DSL::Shared"
   ],
   "build-depends": [],
   "test-depends": [],
-  "resources": [],
+  "resources": [
+    "dfSMRMatrixTitanic-Freq.csv",
+    "dfSMRMatrixTitanic-IDF.csv"
+  ],
   "tags": [
+    "LSA",
+    "LSI",
     "ML",
     "machine learning",
     "recommendations",
