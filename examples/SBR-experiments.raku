@@ -1,7 +1,7 @@
 #!/usr/bin/env perl6
 use lib './lib';
 use lib '.';
-use ML::StreamsBlendingRecommender::SBR;
+use CoreSBR;
 
 ##===========================================================
 my $fileName = "/Users/antonov/R/StreamsBlendingRecommender/output/dfSMRMatrixTitanic.csv";

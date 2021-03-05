@@ -29,7 +29,7 @@ say "Expected to be 0: ", $sbrObj.takeItemInverseIndexes().elems == 0;
 #$sbrObj.transposeTagInverseIndexes();
 #say '$sbrObj.takeItemInverseIndexes(): ', $sbrObj.takeItemInverseIndexes();
 
-say $sbrObj.profile(['id.101']).takeValue;
+say 'profile:', $sbrObj.profile(['id.101']).takeValue;
 
 say $sbrObj.profile(Mix('id.101' => 1, 'id.216' => 0.5), :!object, :normalize);
 
