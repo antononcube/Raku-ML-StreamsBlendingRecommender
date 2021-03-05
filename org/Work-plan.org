@@ -3,7 +3,7 @@
 - This org-mode file has work plan / status for the Raku package
   [[https://github.com/antononcube/Raku-ML-StreamsBlendingRecommender][ML::StreamsBlendingRecommender]].
 - The central class is names ~CoreSBR~ (Streams Blending Recommender).
-* Work plan [11%] [1/9]
+* Work plan [0%] [0/10]
 ** TODO Annex method
    - [ ] For another SBR object
    - [ ] For a collection of inverse indexes
@@ -26,9 +26,10 @@
     - Different methods of merging recommendations results
 ** TODO Parameters for specifying which columns to expect in data ingestion
 ** TODO More extensive results verification and failure management
-** DONE Adverbs for methods [100%]
-  - [X] Should the object be returned, or the computation result?
-  - [X] Should the recommendation results be normalized or not?
+** TODO Adverbs for methods [66%] [2/3]
+- [X] Should the object be returned, or the computation result?
+- [X] Should the recommendation results be normalized or not?
+- [ ] Should history be dropped or not?
 ** TODO Unit tests [0%] [0/9]
   - [ ] Basic development tests
   - [ ] Decide which/what data to use
@@ -39,6 +40,14 @@
   - [ ] ~:normalize~ adverbs tests
   - [ ] Annexing of recommenders tests
   - [ ] Composite SBR tests
+** TODO Performance profiling
+*** DONE First-wave experiments
+- Using both Titanic and Dice.com data.
+- Found out that computations recommendations with ~for~ loop are slow.
+- Sped them up 1.2 to 3 times using ~[(+)]~ and ~Z<<*>>~ .
+- Sorting of mixes is very slow!
+  - I plan to ask in Stack Exchange about that.
+*** TODO Second-wave experiments
 ** TODO Class and method pod6 documentation [%][/]
 - [ ] SBR
 - [ ] Composite
