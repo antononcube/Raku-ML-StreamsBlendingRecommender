@@ -18,7 +18,7 @@ $sbrObj.ingestSMRMatrixCSVFile($fileName, :make);
 
 say '$sbrObj.takeSMRMatrix.elems = ', $sbrObj.takeSMRMatrix.elems;
 
-#$sbrObj.makeTagInverseIndexes();
+say '$sbrObj.takeTagInverseIndexes().elems = ', $sbrObj.takeTagInverseIndexes().elems;
 
 say '$sbrObj.takeTagTypeToTags(): ', $sbrObj.takeTagTypeToTags();
 
