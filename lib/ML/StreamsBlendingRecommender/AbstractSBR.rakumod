@@ -1,0 +1,4 @@
+
+class ML::StreamsBlendingRecommender::AbstractSBR {
+
+}

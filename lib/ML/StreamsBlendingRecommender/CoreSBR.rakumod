@@ -1,9 +1,13 @@
 use v6;
 
 use Text::CSV;
+use ML::StreamsBlendingRecommender::AbstractSBR;
+use ML::StreamsBlendingRecommender::UtilityFunctions;
 
 ## Monadic-like definition.
-class ML::StreamsBlendingRecommender::CoreSBR {
+class ML::StreamsBlendingRecommender::CoreSBR
+        is ML::StreamsBlendingRecommender::AbstractSBR
+        does ML::StreamsBlendingRecommender::UtilityFunctions {
 
     ##========================================================
     ## Data members
@@ -24,8 +28,28 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         @!SMRMatrix = @arg;
         self
     }
+    method setItemInverseIndexes(%arg) {
+        %!itemInverseIndexes = %arg;
+        self
+    }
+    method setTagInverseIndexes(%arg) {
+        %!tagInverseIndexes = %arg;
+        self
+    }
+    method setTagTypeToTags(%arg) {
+        %!tagTypeToTags = %arg;
+        self
+    }
     method setGlobalWeights(%arg) {
         %!globalWeights = %arg;
+        self
+    }
+    method setKnownTags($arg) {
+        $!knownTags = $arg;
+        self
+    }
+    method setKnownItems($arg) {
+        $!knownItems = $arg;
         self
     }
 
@@ -47,8 +71,46 @@ class ML::StreamsBlendingRecommender::CoreSBR {
     method takeGlobalWeights() {
         %!globalWeights
     }
+    method takeKnownTags() {
+        $!knownTags
+    }
+    method takeKnownItems() {
+        $!knownItems
+    }
     method takeValue() {
         %!value
+    }
+
+    ##========================================================
+    ## BUILD
+    ##========================================================
+    submethod BUILD(
+            :@!SMRMatrix,
+            :%!itemInverseIndexes,
+            :%!tagInverseIndexes,
+            :%!tagTypeToTags,
+            :%!globalWeights,
+            Set :$!knownTags,
+            Set :$!knownItems,
+            :%!value){};
+
+    ##========================================================
+    ## Clone
+    ##========================================================
+    method clone(::?CLASS:D: --> ::?CLASS:D) {
+        my ML::StreamsBlendingRecommender::CoreSBR $cloneObj =
+                ML::StreamsBlendingRecommender::CoreSBR.new(
+                        :@!SMRMatrix,
+                        :%!itemInverseIndexes,
+                        :%!tagInverseIndexes,
+                        :%!tagTypeToTags,
+                        :%!globalWeights,
+                        :$!knownTags,
+                        :$!knownItems,
+                        :%!value
+                        );
+        say "clone:", $cloneObj.takeTagInverseIndexes().elems;
+        $cloneObj
     }
 
     ##========================================================
@@ -139,11 +201,11 @@ class ML::StreamsBlendingRecommender::CoreSBR {
     ##========================================================
     ## Profile
     ##========================================================
-    multi method profile(@items, Bool :$normalize = False, Bool :$object = True) {
-        self.profile(Mix(@items), :$normalize, :$object)
+    multi method profile(@items, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.profile(Mix(@items), :$normalize, :$object, :$warn)
     }
 
-    multi method profile(Mix:D $items, Bool :$normalize = False, Bool :$object = True) {
+    multi method profile(Mix:D $items, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
 
         ## Transpose inverse indexes if needed
         if %!itemInverseIndexes.elems == 0 { self.transposeTagInverseIndexes() }
@@ -151,13 +213,13 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         ## Make sure items are known
         my $itemsQuery = Mix($items{($items (&) $!knownItems).keys}:p);
 
-        if $itemsQuery.elems == 0 {
+        if $itemsQuery.elems == 0 and $warn {
             warn 'None of the items is known in the recommender.';
             %!value = %();
             return do if $object { self } else { %!value }
         }
 
-        if $itemsQuery.elems < $items.elems {
+        if $itemsQuery.elems < $items.elems and $warn {
             warn 'Some of the items are unknown in the recommender.';
         }
 
@@ -168,7 +230,7 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         if $normalize { %itemMix = self.normalize(%itemMix, 'max-norm') }
 
         ## Sort
-        my @res = %itemMix.sort({-$_.value});
+        my @res = %itemMix.sort({ -$_.value });
 
         ## Result
         %!value = @res;
@@ -179,34 +241,34 @@ class ML::StreamsBlendingRecommender::CoreSBR {
     ##========================================================
     ## Recommend by history
     ##========================================================
-    multi method recommend(@items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
-        self.recommend(Mix(@items), $nrecs, :$normalize, :$object)
+    multi method recommend(@items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.recommend(Mix(@items), $nrecs, :$normalize, :$object, :$warn)
     }
 
-    multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
+    multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         ## It is not fast, but it is just easy to compute the profile and call recommendByProfile.
-        self.recommendByProfile(Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object)
+        self.recommendByProfile(Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object, :$warn)
     }
 
     ##========================================================
     ## Recommend by profile
     ##========================================================
-    multi method recommendByProfile(@prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
-        self.recommendByProfile(Mix(@prof), $nrecs, :$normalize, :$object)
+    multi method recommendByProfile(@prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.recommendByProfile(Mix(@prof), $nrecs, :$normalize, :$object, :$warn)
     }
 
-    multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
+    multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
 
         ## Make sure tags are known
         my $profQuery = Mix($prof{($prof (&) $!knownTags).keys}:p);
 
-        if $profQuery.elems == 0 {
+        if $profQuery.elems == 0 and $warn {
             warn 'None of the profile tags is known in the recommender.';
             %!value = %();
             return do if $object { self } else { %!value }
         }
 
-        if $profQuery.elems < $prof.elems {
+        if $profQuery.elems < $prof.elems and $warn {
             warn 'Some of the profile tags are unknown in the recommender.';
         }
 
@@ -223,37 +285,6 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         %!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
 
         if $object { self } else { %!value }
-    }
-
-    ##========================================================
-    ## Norm
-    ##========================================================
-    multi method norm(Associative $mix, Str $spec = "euclidean") {
-        self.norm($mix.values, $spec)
-    }
-
-    multi method norm(@vec, Str $spec = 'euclidean') {
-        given $spec {
-            when $_ (elem) <max-norm inf-norm inf infinity> { @vec.map({ abs($_) }).max }
-            when $_ (elem) <one-norm one sum> { @vec.map({ abs($_) }).sum }
-            when $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
-            default { die "Unknown norm specification '$spec'."; }
-        }
-    }
-
-    sub safeInversion(Numeric $n) {
-        $n == 0 ?? 1 !! 1 / $n
-    }
-
-    ##========================================================
-    ## Normalize
-    ##========================================================
-    multi method normalize(Associative $mix, Str $spec = "euclidean") {
-        $mix <<*>> safeInversion(self.norm($mix, $spec))
-    }
-
-    multi method normalize(@vec, Str $spec = 'euclidean') {
-        @vec <<*>> safeInversion(self.norm(@vec, $spec))
     }
 
     ##========================================================
@@ -411,4 +442,28 @@ class ML::StreamsBlendingRecommender::CoreSBR {
         if $object { self } else { %!globalWeights }
     }
 
+    ##========================================================
+    ## Remove tag type(s)
+    ##========================================================
+    method removeTagTypes(@tagTypes) {
+
+        my %tagTypesToRemoveToTags = %!tagTypeToTags{@tagTypes}:p;
+
+        if %tagTypesToRemoveToTags.elems == 0 {
+            warn 'None of the specified tag types is known in the recommender.';
+            return self
+        }
+
+        for %tagTypesToRemoveToTags.kv -> $tagType, $tags {
+            say "HERE:", $tags;
+            %!tagInverseIndexes{|$tags}:delete;
+            $!knownTags (-)= $tags;
+        }
+
+        say $!knownTags;
+
+        %!tagTypeToTags{@tagTypes}:delete;
+
+        self
+    }
 }
