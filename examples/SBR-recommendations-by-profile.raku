@@ -4,7 +4,7 @@ use lib '.';
 use ML::StreamsBlendingRecommender::CoreSBR;
 
 ##===========================================================
-my $fileName = "/Users/antonov/R/StreamsBlendingRecommender/output/dfSMRMatrixTitanic.csv";
+my Str $fileName =  $*CWD.Str ~ '/resources/' ~ 'dfSMRMatrixTitanic-Freq.csv';
 
 my $sbrObj = ML::StreamsBlendingRecommender::CoreSBR.new;
 
@@ -39,3 +39,4 @@ say ML::StreamsBlendingRecommender::CoreSBR.norm(%recs.values, 'one');
 say ML::StreamsBlendingRecommender::CoreSBR.norm(%recs.values, 'inf');
 
 # say SBR.norm(%recs.values, 'irer');
+
