@@ -1,9 +1,10 @@
 #!/usr/bin/env perl6
-
+use lib './lib';
+use lib '.';
 use Text::CSV;
 
 ##===========================================================
-my $fileName = "/Users/antonov/R/StreamsBlendingRecommender/output/dfSMRMatrixTitanic.csv";
+my $fileName = %?RESOURCES<dfSMRMatrixTitanic-Freq.csv>;
 
 my $csv = Text::CSV.new;
 
