@@ -41,6 +41,7 @@ my $sbrCompObj = ML::StreamsBlendingRecommender::CompositeSBR.new();
 
 $sbrCompObj.objects.push("First"=>$sbrObj);
 $sbrCompObj.objects.push("Second"=>$sbrObj2);
+$sbrCompObj.weights.push( { "First" => 1, "Second" => 0.6} );
 
 say $sbrObj.recommendByProfile( ["male", "3rd", "survived"], 20, :!object);
 
