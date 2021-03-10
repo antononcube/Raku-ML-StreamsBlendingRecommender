@@ -12,7 +12,8 @@
   "provides": {
     "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
     "ML::StreamsBlendingRecommender::CoreSBR": "lib/ML/StreamsBlendingRecommender/CoreSBR.rakumod",
-    "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod"
+    "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod",
+    "ML::StreamsBlendingRecommender::UtilityFunctions": "lib/ML/StreamsBlendingRecommender/UtilityFunctions.rakumod"
   },
   "depends": [
     "DSL::Shared"
