@@ -20,6 +20,7 @@ class ML::StreamsBlendingRecommender::CompositeSBR
     method takeObjects() {
         %.objects
     }
+
     method takeValue() {
         %!value
     }
