@@ -138,7 +138,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         %bag = self.normalize( %bag, 'euclidean');
 
         ## Result
-        if $object { self.setValue(%bag) } else { %bag }
+        if $object { self.value = %bag; self } else { %bag }
     }
 
     ##========================================================

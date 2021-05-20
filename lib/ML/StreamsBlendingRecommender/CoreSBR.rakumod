@@ -19,7 +19,6 @@ class ML::StreamsBlendingRecommender::CoreSBR
     has %!globalWeights = %();
     has Set $!knownTags = set();
     has Set $!knownItems = set();
-    has $!value;
 
     ##========================================================
     ## Setters
@@ -52,10 +51,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         $!knownItems = $arg;
         self
     }
-    method setValue($arg) {
-        $!value = $arg;
-        self
-    }
+
 
     ##========================================================
     ## Takers
@@ -81,22 +77,19 @@ class ML::StreamsBlendingRecommender::CoreSBR
     method takeKnownItems() {
         $!knownItems
     }
-    method takeValue() {
-        $!value
-    }
 
     ##========================================================
     ## BUILD
     ##========================================================
     submethod BUILD(
+            #:$.value
             #:@.SMRMatrix,
             :%!itemInverseIndexes,
             :%!tagInverseIndexes,
             :%!tagTypeToTags,
             :%!globalWeights,
             Set :$!knownTags,
-            Set :$!knownItems,
-            :$!value){};
+            Set :$!knownItems){};
 
     ##========================================================
     ## Clone
@@ -111,7 +104,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
                         :%!globalWeights,
                         :$!knownTags,
                         :$!knownItems,
-                        :$!value
+                        :$.value
                         );
         say "clone:", $cloneObj.takeTagInverseIndexes().elems;
         $cloneObj
@@ -242,8 +235,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $itemsQuery.elems == 0 and $warn {
             warn 'None of the items is known in the recommender.';
-            $!value = %();
-            return do if $object { self } else { $!value }
+            $.value = %();
+            return do if $object { self } else { $.value }
         }
 
         if $itemsQuery.elems < $items.elems and $warn {
@@ -260,7 +253,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %itemMix.sort({ -$_.value });
 
         ## Result
-        $!value = @res;
+        self.value = @res;
 
         if $object { self } else { @res }
     }
@@ -303,8 +296,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $profQuery.elems == 0 and $warn {
             warn 'None of the profile tags is known in the recommender.';
-            $!value = %();
-            return do if $object { self } else { $!value }
+            self.value = %();
+            return do if $object { self } else { self.value }
         }
 
         if $profQuery.elems < $prof.elems and $warn {
@@ -321,9 +314,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %profMix.sort({ -$_.value });
 
         ## Result
-        $!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
+        self.value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
 
-        if $object { self } else { $!value }
+        if $object { self } else { $.value }
     }
 
     ##========================================================
@@ -512,12 +505,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         for %tagTypesToRemoveToTags.kv -> $tagType, $tags {
-            say "HERE:", $tags;
             %!tagInverseIndexes{|$tags}:delete;
             $!knownTags (-)= $tags;
         }
-
-        say $!knownTags;
 
         %!tagTypeToTags{@tagTypes}:delete;
 
