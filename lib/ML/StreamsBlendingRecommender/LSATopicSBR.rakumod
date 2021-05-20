@@ -18,9 +18,9 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Ingest a LSA matrix CSV file
     ##========================================================
-    #| Global weights CSV file ingestion.
+    #| Ingest LSA matrix CSV file ingestion.
     #| * C<$fileName> CSV file name.
-    #| * C<$topicColumnName> The words column name.
+    #| * C<$topicColumnName> The topics column name.
     #| * C<$wordColumnName> The words column name.
     #| * C<$weightColumnName> The weights column name.
     #| * C<$make> Should the inverse indexes be made or not?
