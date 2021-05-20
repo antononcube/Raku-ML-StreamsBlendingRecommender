@@ -12,20 +12,20 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Data members
     ##========================================================
-    has @!SMRMatrix;
+    has @.SMRMatrix;
     has %!itemInverseIndexes = %();
     has %!tagInverseIndexes = %();
     has %!tagTypeToTags = %();
     has %!globalWeights = %();
     has Set $!knownTags = set();
     has Set $!knownItems = set();
-    has %!value;
+    has $!value;
 
     ##========================================================
     ## Setters
     ##========================================================
     method setSMRMatrix(@arg) {
-        @!SMRMatrix = @arg;
+        @.SMRMatrix = @arg;
         self
     }
     method setItemInverseIndexes(%arg) {
@@ -57,7 +57,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ## Takers
     ##========================================================
     method takeSMRMatrix() {
-        @!SMRMatrix
+        @.SMRMatrix
     }
     method takeItemInverseIndexes() {
         %!itemInverseIndexes
@@ -78,21 +78,21 @@ class ML::StreamsBlendingRecommender::CoreSBR
         $!knownItems
     }
     method takeValue() {
-        %!value
+        $!value
     }
 
     ##========================================================
     ## BUILD
     ##========================================================
     submethod BUILD(
-            :@!SMRMatrix,
+            #:@.SMRMatrix,
             :%!itemInverseIndexes,
             :%!tagInverseIndexes,
             :%!tagTypeToTags,
             :%!globalWeights,
             Set :$!knownTags,
             Set :$!knownItems,
-            :%!value){};
+            :$!value){};
 
     ##========================================================
     ## Clone
@@ -100,14 +100,14 @@ class ML::StreamsBlendingRecommender::CoreSBR
     method clone(::?CLASS:D: --> ::?CLASS:D) {
         my ML::StreamsBlendingRecommender::CoreSBR $cloneObj =
                 ML::StreamsBlendingRecommender::CoreSBR.new(
-                        :@!SMRMatrix,
+                        :@.SMRMatrix,
                         :%!itemInverseIndexes,
                         :%!tagInverseIndexes,
                         :%!tagTypeToTags,
                         :%!globalWeights,
                         :$!knownTags,
                         :$!knownItems,
-                        :%!value
+                        :$!value
                         );
         say "clone:", $cloneObj.takeTagInverseIndexes().elems;
         $cloneObj
@@ -116,17 +116,27 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Ingest a SMR matrix CSV file
     ##========================================================
-    method ingestSMRMatrixCSVFile(Str $fileName, Bool :$make = False, Bool :$object = True) {
+    method ingestSMRMatrixCSVFile(Str $fileName,
+                                  Str :$itemColumnName = 'Item',
+                                  Str :$tagTypeColumnName = 'TagType',
+                                  Str :$valueColumnName = 'Value',
+                                  Str :$weightColumnName = 'Weight',
+                                  Bool :$make = False, Bool :$object = True) {
 
         my $csv = Text::CSV.new;
-        @!SMRMatrix = $csv.csv(in => $fileName, headers => 'auto');
+        @.SMRMatrix = $csv.csv(in => $fileName, headers => 'auto');
 
-        my @expectedColumnNames = <Item TagType Value Weight>;
+        my @expectedColumnNames = ($itemColumnName, $tagTypeColumnName, $valueColumnName, $weightColumnName);
 
-        if (@!SMRMatrix[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
-            warn 'The ingested CSV file does not have column names:', @expectedColumnNames.join(', '), '.';
+        if (@.SMRMatrix[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
+            warn 'The ingested CSV file does not have the expected column names:', @expectedColumnNames.join(', '), '.';
             return Nil
         }
+
+        @.SMRMatrix =
+                do for @.SMRMatrix -> %row {
+                    {Item => %row{$itemColumnName}, TagType => %row{$tagTypeColumnName}, Value => %row{$valueColumnName}, Weight => %row{$weightColumnName}}
+                };
 
         %!itemInverseIndexes = %();
         %!tagInverseIndexes = %();
@@ -142,7 +152,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     method makeTagInverseIndexes(Bool :$object = True) {
 
         ## Split into a hash by tag type.
-        my %inverseIndexGroups = @!SMRMatrix.classify({ $_<TagType> });
+        my %inverseIndexGroups = @.SMRMatrix.classify({ $_<TagType> });
 
         ## For each tag type split into hash by Value.
         my %inverseIndexesPerTagType = %inverseIndexGroups.pairs.map({ $_.key => $_.value.classify({ $_<Value> }) });
@@ -214,8 +224,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $itemsQuery.elems == 0 and $warn {
             warn 'None of the items is known in the recommender.';
-            %!value = %();
-            return do if $object { self } else { %!value }
+            $!value = %();
+            return do if $object { self } else { $!value }
         }
 
         if $itemsQuery.elems < $items.elems and $warn {
@@ -232,7 +242,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %itemMix.sort({ -$_.value });
 
         ## Result
-        %!value = @res;
+        $!value = @res;
 
         if $object { self } else { @res }
     }
@@ -263,8 +273,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $profQuery.elems == 0 and $warn {
             warn 'None of the profile tags is known in the recommender.';
-            %!value = %();
-            return do if $object { self } else { %!value }
+            $!value = %();
+            return do if $object { self } else { $!value }
         }
 
         if $profQuery.elems < $prof.elems and $warn {
@@ -281,9 +291,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %profMix.sort({ -$_.value });
 
         ## Result
-        %!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
+        $!value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
 
-        if $object { self } else { %!value }
+        if $object { self } else { $!value }
     }
 
     ##========================================================
