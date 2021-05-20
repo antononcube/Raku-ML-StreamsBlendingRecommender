@@ -148,6 +148,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     #| * C<$text> Text query.
     #| * C<$nrecs> Number of recommendations.
     #| * C<$splitPattern> Text splitting argument of split: a string, a regex, or a list of strings or regexes.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
     method representByTopics( Str:D $text, Int:D $nrecs = 12, :$splitPattern = /\s+/, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
@@ -158,7 +159,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         ## Recommend by profile
         self.recommendByProfile( %bag.Mix, $nrecs, :$normalize, :$object, :$warn)
     }
-    #| Uses C<representByTerms>.
+    #| Uses C<LSATopicSBR::representByTerms>.
 
     ##========================================================
     ## Recommend by free text
@@ -167,11 +168,12 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     #| * C<$text> Text query.
     #| * C<$nrecs> Number of recommendations.
     #| * C<$splitPattern> Text splitting argument of split: a string, a regex, or a list of strings or regexes.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
     method recommendByText( Str:D $text, Int:D $nrecs = 12, :$splitPattern = /\s+/, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         self.representByTopics( $text, $nrecs, :$splitPattern, :$normalize, :$object, :$warn)
     }
-    #| Synonym of C<representByTopics>.
+    #| Synonym of C<LSATopicsSBR::representByTopics>.
 
 }
