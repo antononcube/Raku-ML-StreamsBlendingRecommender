@@ -52,6 +52,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
         $!knownItems = $arg;
         self
     }
+    method setValue($arg) {
+        $!value = $arg;
+        self
+    }
 
     ##========================================================
     ## Takers
@@ -116,6 +120,14 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Ingest a SMR matrix CSV file
     ##========================================================
+    #| Ingest SMR matrix CSV file ingestion.
+    #| * C<$fileName> CSV file name.
+    #| * C<$itemColumnName> The items column name.
+    #| * C<$tagTypeColumnName> The tag types column name.
+    #| * C<$valueColumnName> The values (tags) column name.
+    #| * C<$weightColumnName> The weights column name.
+    #| * C<$make> Should the inverse indexes be made or not?
+    #| * C<$object> Should the result be an object or not?
     method ingestSMRMatrixCSVFile(Str $fileName,
                                   Str :$itemColumnName = 'Item',
                                   Str :$tagTypeColumnName = 'TagType',
@@ -145,10 +157,13 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $object { self } else { True }
     }
+    #| A modified version of this function's code is used in C<LSATopicSBR::ingestLSAMatrixCSVFile>.
 
     ##========================================================
     ## Make tag inverse indexes
     ##========================================================
+    #| Make the inverse indexes that correspond to the SMR matrix.
+    #| * C<$object> Should the result be an object or not?
     method makeTagInverseIndexes(Bool :$object = True) {
 
         ## Split into a hash by tag type.
@@ -185,6 +200,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Transpose tag inverse indexes
     ##========================================================
+    #| Transpose inverse indexes.
+    #| * C<$object> Should the result be an object or not?
     method transposeTagInverseIndexes(Bool :$object = True) {
 
         ## Transpose tag inverse indexes into item inverse indexes.
@@ -206,6 +223,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $object { self } else { True }
     }
+    #| I.e. make inverse indexes that correspond to the rows of the SMR matrix.
 
     ##========================================================
     ## Profile
@@ -250,6 +268,12 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Recommend by history
     ##========================================================
+    #| Recommend items for a consumption history (that is a list or a mix of items.)
+    #| * C<@items> A list or a mix of items.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
     multi method recommend(@items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         self.recommend(Mix(@items), $nrecs, :$normalize, :$object, :$warn)
     }
@@ -262,6 +286,12 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Recommend by profile
     ##========================================================
+    #| Recommend items for a consumption profile (that is a list or a mix of tags.)
+    #| * C<@prof> A list or a mix of tags.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
     multi method recommendByProfile(@prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         self.recommendByProfile(Mix(@prof), $nrecs, :$normalize, :$object, :$warn)
     }
@@ -299,6 +329,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Normalize per tag type
     ##========================================================
+    #| Normalize the inverse indexes per tag type.
+    #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
+    #| * C<$object> Should the result be an object or not?
     method normalizePerTagType($normSpec, Bool :$object = True) {
 
         ## Find norms per tag type.
@@ -328,6 +361,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Normalize per tag type per item
     ##========================================================
+    #| Normalize the inverse indexes per tag type per item.
+    #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
+    #| * C<$object> Should the result be an object or not?
     method normalizePerTagTypePerItem($normSpec, Bool :$object = True) {
 
         ## Instead of working with combined keys (tagType item)
@@ -367,10 +403,15 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $object { self } else { True }
     }
+    #| Interpretation: each row of the SMR matrix is partitioned in tag type sub-vectors
+    #| and those sub-vectors are normalized.
 
     ##========================================================
     ## Normalize per tag
     ##========================================================
+    #| Normalize the inverse indexes per tag.
+    #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
+    #| * C<$object> Should the result be an object or not?
     method normalizePerTag($normSpec, Bool :$object = True) {
 
         ## Normalize.
@@ -389,6 +430,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Unitize
     ##========================================================
+    #| Unitize the inverse indexes.
+    #| * C<$object> Should the result be an object or not?
     method unitize(Bool :$object = True) {
 
         ## Unitize.
@@ -406,6 +449,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Global weights
     ##========================================================
+    #| Compute global weights for the keys of the inverse indexes.
+    #| * C<$spec> Global weight function spec; one of C<<IDF GFIDF Binary None Normal ColumnStochastic Sum>>.
+    #| * C<$object> Should the result be an object or not?
     method globalWeights($spec, Bool :$object = True) {
 
         my %colSums = Hash(%!tagInverseIndexes.keys Z=> %!tagInverseIndexes.values>>.total);
@@ -454,6 +500,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Remove tag type(s)
     ##========================================================
+    #| Remove tag types.
+    #| * C<@tagTypes> A list of tag types to be removed
     method removeTagTypes(@tagTypes) {
 
         my %tagTypesToRemoveToTags = %!tagTypeToTags{@tagTypes}:p;
