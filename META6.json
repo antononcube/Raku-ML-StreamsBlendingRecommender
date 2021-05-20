@@ -13,6 +13,7 @@
     "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
     "ML::StreamsBlendingRecommender::CoreSBR": "lib/ML/StreamsBlendingRecommender/CoreSBR.rakumod",
     "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod",
+    "ML::StreamsBlendingRecommender::LSATopicSBR": "lib/ML/StreamsBlendingRecommender/LSATopicSBR.rakumod",
     "ML::StreamsBlendingRecommender::UtilityFunctions": "lib/ML/StreamsBlendingRecommender/UtilityFunctions.rakumod"
   },
   "depends": [
