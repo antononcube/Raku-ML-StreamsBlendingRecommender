@@ -18,6 +18,13 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Ingest a LSA matrix CSV file
     ##========================================================
+    #| Global weights CSV file ingestion.
+    #| * C<$fileName> CSV file name.
+    #| * C<$topicColumnName> The words column name.
+    #| * C<$wordColumnName> The words column name.
+    #| * C<$weightColumnName> The weights column name.
+    #| * C<$make> Should the inverse indexes be made or not?
+    #| * C<$object> Should the result be an object or not?
     method ingestLSAMatrixCSVFile(Str $fileName,
                                   Str :$topicColumnName = 'Topic',
                                   Str :$wordColumnName = 'Word',
@@ -43,10 +50,16 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
 
         if $object { self } else { True }
     }
+    #| A modified version of C<CoreSBR::ingestSMRMatrixCSVFile>.
 
     ##========================================================
     ## Ingest terms global weights
     ##========================================================
+    #| Global weights CSV file ingestion.
+    #| * C<$fileName> CSV file name.
+    #| * C<$wordColumnName> The words column name.
+    #| * C<$weightColumnName> The weights column name.
+    #| * C<$object> Should the result be an object or not?
     method ingestGlobalWeightsCSVFile(Str $fileName,
                                       Str :$wordColumnName = 'Word',
                                       Str :$weightColumnName = 'Weight',
@@ -70,6 +83,11 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Ingest stemming rules
     ##========================================================
+    #| Stemming rules CSV file ingestion.
+    #| * C<$fileName> CSV file name.
+    #| * C<$wordColumnName> The words column name.
+    #| * C<$stemColumnName> The stems column name.
+    #| * C<$object> Should the result be an object or not?
     method ingestStemRulesCSVFile(Str $fileName,
                                   Str :$wordColumnName = 'Word',
                                   Str :$stemColumnName = 'Stem',
@@ -91,9 +109,13 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     }
 
     ##========================================================
-    ## Recommend by free text
+    ## Represent by terms
     ##========================================================
-    method representByTerms( Str:D $text, :$splitPattern = /\s+/ ) {
+    #| Represent text by terms.
+    #| * C<$text> Text.
+    #| * C<$splitPattern> Text splitting argument of split: a string, a regex, or a list of strings or regexes.
+    #| * C<$object> Should the result be an object or not?
+    method representByTerms( Str:D $text, :$splitPattern = /\s+/, Bool :$object = True ) {
 
         ## Make a bag words
         my %bag = Bag( $text.split($splitPattern).map({ $_.lc}) );
@@ -112,20 +134,44 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
             }
         }
 
-        ## Normalize and return as a result
-        self.normalize( %bag, 'euclidean')
+        ## Normalize
+        %bag = self.normalize( %bag, 'euclidean');
+
+        ## Result
+        if $object { self.setValue(%bag) } else { %bag }
     }
 
     ##========================================================
-    ## Recommend by free text
+    ## Represent by topics
     ##========================================================
-    method recommendByText( Str:D $text, Int:D $nrecs = 12, :$splitPattern = /\s+/, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+    #| Recommend topics for a text query.
+    #| * C<$text> Text query.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$splitPattern> Text splitting argument of split: a string, a regex, or a list of strings or regexes.
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
+    method representByTopics( Str:D $text, Int:D $nrecs = 12, :$splitPattern = /\s+/, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
 
         ## Get representation by terms
-        my %bag = self.representByTerms( $text, :$splitPattern );
+        my %bag = self.representByTerms( $text, :$splitPattern):!object;
 
         ## Recommend by profile
         self.recommendByProfile( %bag.Mix, $nrecs, :$normalize, :$object, :$warn)
     }
+    #| Uses C<representByTerms>.
+
+    ##========================================================
+    ## Recommend by free text
+    ##========================================================
+    #| Recommend topics for a text query.
+    #| * C<$text> Text query.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$splitPattern> Text splitting argument of split: a string, a regex, or a list of strings or regexes.
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
+    method recommendByText( Str:D $text, Int:D $nrecs = 12, :$splitPattern = /\s+/, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.representByTopics( $text, $nrecs, :$splitPattern, :$normalize, :$object, :$warn)
+    }
+    #| Synonym of C<representByTopics>.
 
 }
