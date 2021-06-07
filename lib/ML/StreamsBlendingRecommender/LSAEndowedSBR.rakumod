@@ -39,7 +39,7 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
                                     Int:D $nrecs = 12,
                                     Bool :$normalize = False,
                                     Bool :$object = True,
-                                    Bool :$warn) {
+                                    Bool :$warn = True) {
         self.recommendByProfile(Mix(@prof), $text, $nrecs, :$normalize, :$object, :$warn)
     }
 
@@ -48,7 +48,8 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
                                     Int:D $nrecs = 12,
                                     Bool :$normalize = False,
                                     Bool :$object = True,
-                                    Bool :$warn) {
+                                    Bool :$warn = True,
+                                    Str :$profileNormalizer = 'eucliden' ) {
 
         ## Check
         if not self.Core.defined {
@@ -79,8 +80,8 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
             $textWordsProf = $textWordsProf.map({ 'Word:' ~ $_.key => $_.value }).Mix;
             $textTopicsProf = $textTopicsProf.map({ 'Topic:' ~ $_.key => $_.value }).Mix;
 
-            $textWordsProf = self.normalize($textWordsProf, 'max-norm');
-            $textTopicsProf = self.normalize($textTopicsProf, 'max-norm');
+            $textWordsProf = self.normalize($textWordsProf, :$profileNormalizer);
+            $textTopicsProf = self.normalize($textTopicsProf, :$profileNormalizer);
 
             ## Make the word-topics profile.
             %textProf = $textWordsProf (|) $textTopicsProf;
@@ -89,7 +90,7 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
         ## Make the combined profile.
         ## Note, the additional normalization arguments have to be surfaced to the signature.
         my $profCombined =
-                do with $prof.defined { self.normalize($prof, 'max-norm') (|) %textProf }
+                do with $prof.defined { self.normalize($prof, :$profileNormalizer) (|) %textProf }
                 else { %textProf }
 
         ## Get recommendations
