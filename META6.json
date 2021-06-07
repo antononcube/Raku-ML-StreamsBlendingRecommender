@@ -23,8 +23,14 @@
   "build-depends": [],
   "test-depends": [],
   "resources": [
-    "dfSMRMatrixTitanic-Freq.csv",
-    "dfSMRMatrixTitanic-IDF.csv"
+    "RandomGoods-dfLSATopicWordMatrix.csv",
+    "RandomGoods-dfLSAWordGlobalWeights.csv",
+    "RandomGoods-dfSMRMatrix.csv",
+    "RandomGoods-dfStemRules.csv",
+    "WLExampleData-dfLSATopicWordMatrix.csv",
+    "WLExampleData-dfLSAWordGlobalWeights.csv",
+    "WLExampleData-dfSMRMatrix.csv",
+    "WLExampleData-dfStemRules.csv"
   ],
   "tags": [
     "LSA",
