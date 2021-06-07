@@ -35,10 +35,10 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     ## Normalize
     ##========================================================
     multi method normalize(Associative $mix, Str $spec = "euclidean") {
-        $mix <<*>> safeInversion(self.norm($mix, $spec))
+        $spec eq 'none' ?? $mix !! $mix <<*>> safeInversion(self.norm($mix, $spec))
     }
 
     multi method normalize(@vec, Str $spec = 'euclidean') {
-        @vec <<*>> safeInversion(self.norm(@vec, $spec))
+        $spec eq 'none' ?? @vec !! @vec <<*>> safeInversion(self.norm(@vec, $spec))
     }
 }
