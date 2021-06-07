@@ -144,7 +144,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Represent by topics
     ##========================================================
-    #| Recommend topics for a text query.
+    #| Represent a text query by topics.
     #| * C<$text> Text query.
     #| * C<$nrecs> Number of recommendations.
     #| * C<$splitPattern> Text splitting argument of split: a string, a regex, or a list of strings or regexes.
@@ -157,7 +157,17 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         my %bag = self.representByTerms( $text, :$splitPattern):!object;
 
         ## Recommend by profile
-        self.recommendByProfile( %bag.Mix, $nrecs, :$normalize, :$object, :$warn)
+        my %res = self.recommendByProfile( %bag.Mix, $nrecs, :$warn):!object:!normalize;
+
+        ## Normalize
+        if $normalize {
+            %res = self.normalize( %res, 'max-norm' )
+        } else {
+            %res = self.normalize( %res, 'euclidean' )
+        }
+
+        ## Result
+        if $object { self.value = %res; self } else { %res }
     }
     #| Uses C<LSATopicSBR::representByTerms>.
 
