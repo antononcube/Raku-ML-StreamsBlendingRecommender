@@ -4,13 +4,15 @@ use lib '.';
 use ML::StreamsBlendingRecommender::LSAEndowedSBR;
 
 ##===========================================================
-my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfLSATopicWordMatrix.csv';
+#my $datasetID = 'RandomGoods';
+my $datasetID = 'WLExampleData';
+my Str $fileName = $*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfLSATopicWordMatrix.csv';
 
 my $sbrLSAObj = ML::StreamsBlendingRecommender::LSATopicSBR.new;
 
 $sbrLSAObj.ingestLSAMatrixCSVFile($fileName);
-$sbrLSAObj.ingestGlobalWeightsCSVFile($*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfLSAWordGlobalWeights.csv');
-$sbrLSAObj.ingestStemRulesCSVFile($*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfStemRules.csv');
+$sbrLSAObj.ingestGlobalWeightsCSVFile($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfLSAWordGlobalWeights.csv');
+$sbrLSAObj.ingestStemRulesCSVFile($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfStemRules.csv');
 
 say '$sbrLSAObj.takeSMRMatrix.elems = ', $sbrLSAObj.takeSMRMatrix.elems;
 
@@ -26,7 +28,7 @@ say '$sbrLSAObj.takeInverseIndexes.keys = ', $sbrLSAObj.takeTagInverseIndexes.ke
 
 say "-" x 60;
 
-my $recs = $sbrLSAObj.recommendByText("perambulate formic acquired", 10):!object;
+my $recs = $sbrLSAObj.recommendByText("ozone in los angelis", 10):!object;
 
 say $recs;
 
@@ -35,7 +37,7 @@ say "=" x 60;
 
 my $sbrCoreObj = ML::StreamsBlendingRecommender::CoreSBR.new;
 
-$sbrCoreObj.ingestSMRMatrixCSVFile($*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfSMRMatrix.csv');
+$sbrCoreObj.ingestSMRMatrixCSVFile($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfSMRMatrix.csv');
 
 say '$sbrCoreObj.takeSMRMatrix.elems = ', $sbrCoreObj.takeSMRMatrix.elems;
 
@@ -52,7 +54,8 @@ say '$sbrCoreObj.takeInverseIndexes.keys = ', $sbrCoreObj.takeTagInverseIndexes.
 
 say "-" x 60;
 
-my $recs2 = $sbrCoreObj.recommendByProfile(["Good:milk", "Country:denmark", "UserID:frehvojwf"], 10):!object;
+#my $recs2 = $sbrCoreObj.recommendByProfile(["Good:milk", "Country:denmark", "UserID:frehvojwf"], 10):!object;
+my $recs2 = $sbrCoreObj.recommendByProfile(["ApplicationArea:Chemistry", "DataType:MultivariateSample"], 10):!object:normalize;
 
 say $recs2;
 
@@ -64,10 +67,22 @@ my $sbrWithLSAObj = ML::StreamsBlendingRecommender::LSAEndowedSBR.new;
 $sbrWithLSAObj.Core = $sbrCoreObj;
 $sbrWithLSAObj.LSA = $sbrLSAObj;
 
-my $recs3 =
-        $sbrWithLSAObj.recommendByProfile(
-                ["Good:milk", "Country:denmark", "UserID:frehvojwf"],
-                "perambulate formic acquired",
-                10):!object;
+#my $recs3 =
+#        $sbrWithLSAObj.recommendByProfile(
+#                ["Good:milk", "Country:denmark", "UserID:frehvojwf"],
+#                "perambulate formic acquired",
+#                10):!object;
+
+my $tagsQuery =  ["ApplicationArea:Aviation", "DataType:TimeSeries"];
+my $query = 'airline time series';
+
+say "-" x 30;
+say "Represent by terms:  ", $sbrLSAObj.representByTerms($query):!object;
+
+say "-" x 30;
+say "Represent by topics: ", $sbrLSAObj.representByTopics($query,):!object;
+
+say "-" x 30;
+my $recs3 = $sbrWithLSAObj.recommendByProfile( $tagsQuery, $query, 10, profileNormalizer => 'euclidean' ):!object;
 
 say $recs3;
