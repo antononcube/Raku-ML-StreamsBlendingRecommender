@@ -106,7 +106,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
                         :$!knownItems,
                         :$.value
                         );
-        say "clone:", $cloneObj.takeTagInverseIndexes().elems;
+        ## say "clone:", $cloneObj.takeTagInverseIndexes().elems;
         $cloneObj
     }
 
@@ -181,7 +181,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         for %inverseIndexesPerTagType.values -> %h { %!tagInverseIndexes.append(%h) };
 
         ## Assign known tags.
-        say (%!tagInverseIndexes.keys).Set;
+        ## say (%!tagInverseIndexes.keys).Set;
         $!knownTags = (%!tagInverseIndexes.keys).Set;
 
         ## We make sure item inverse indexes are empty.
@@ -273,7 +273,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
     multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         ## It is not fast, but it is just easy to compute the profile and call recommendByProfile.
-        self.recommendByProfile(Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object, :$warn)
+        self.recommendByProfile(Mix(self.profile($items):!object), $nrecs, :$normalize, :$object, :$warn)
     }
 
     ##========================================================
