@@ -1,0 +1,32 @@
+@startuml
+
+main -> "CoreSBR-object" : create
+main -> "CoreSBR-object" : ingestSMRMatrixCSVFile
+main -> "CoreSBR-object" : makeTagInverseIndexes
+
+main -> "LSATopicSBR-object" : create
+main -> "LSATopicSBR-object" : ingestLSAMatrixCSVFile
+main -> "LSATopicSBR-object" : ingestGlobalWeightsCSVFile
+main -> "LSATopicSBR-object" : ingestStemRulesCSVFile
+main -> "LSATopicSBR-object" : makeTagInverseIndexes
+
+main -> "LSAEndowedSBR-object" : create
+main -> "LSAEndowedSBR-object" : set CoreSBR-object
+main -> "LSAEndowedSBR-object" : set LSATopicSBR-object
+
+main -> "LSAEndowedSBR-object" : recommendByProfile($tagsProf, $text)
+
+"LSAEndowedSBR-object" -> "CoreSBR-object" : recommendByProfile($tagsProf)
+"CoreSBR-object" -> "LSAEndowedSBR-object" : recommendations
+
+"LSAEndowedSBR-object" -> "LSATopicSBR-object" : representByTerms($text)
+"LSAEndowedSBR-object" -> "LSATopicSBR-object" : representByTopics($text)
+"LSAEndowedSBR-object" -> "LSAEndowedSBR-object" : merge representations into $textProf
+"LSAEndowedSBR-object" -> "LSAEndowedSBR-object" : merge $tagsProf and $textProf into $profCombined
+
+"LSAEndowedSBR-object" -> "CoreSBR-object" : recommendByProfile($profCombined)
+"CoreSBR-object" -> "LSAEndowedSBR-object" : recommendations
+
+"LSAEndowedSBR-object" -> main : recommendations
+
+@enduml

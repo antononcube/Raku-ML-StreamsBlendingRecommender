@@ -1,0 +1,65 @@
+@startuml
+
+abstract class AbstractSBR {}
+
+class UtilityFunctions <<role>> {
+{method} norm( $mix )
+{method} normalize( $mix )
+}
+
+class CoreSBR {
+
+{field} @.SMRMatrix
+{field} %!itemInverseIndexes
+{field} %!tagInverseIndexes
+{field} %!tagTypeToTags
+{field} %!globalWeights
+{field} Set $!knownTags
+{field} Set $!knownItems
+
+{method} globalWeights
+{method} ingestSMRMatrixCSVFile
+{method} makeTagInverseIndexes
+{method} normalizePerTagType
+{method} normalizePerTagTypePerItem
+{method} profile( %scoredItems )
+{method} recommend( %scoredItems, $nrecs )
+{method} recommendByProfile( $scoredTags, $nrecs)
+{method} removeTagTypes
+{method} transposeTagInverseIndexes
+{method} unitize
+}
+
+class CompositeSBR {
+{field} %.objects
+{field} %.weights
+{method} profile( %scoredItems )
+{method} recommend( %scoredItems, $nrecs )
+{method} recommendByProfile( $scoredTags, $nrecs)
+}
+
+class LSAEndowedSBR {
+{field} $.Core
+{field} $.LSA
+{method} profile( %scoredItems )
+{method} recommend( %scoredItems, $nrecs )
+{method} recommendByProfile( $scoredTags, $nrecs)
+}
+
+UtilityFunctions <|--- CoreSBR
+UtilityFunctions <|--- LSATopicSBR
+UtilityFunctions <|--- LSAEndowedSBR
+UtilityFunctions <|--- CompositeSBR
+
+AbstractSBR <|--- CompositeSBR
+AbstractSBR <|--- CoreSBR
+AbstractSBR <|--- LSAEndowedSBR
+
+CoreSBR <|--- LSATopicSBR
+
+LSAEndowedSBR o--- CoreSBR : 1
+LSAEndowedSBR o--- LSATopicSBR : 1
+
+CompositeSBR o--- CoreSBR : 1..*
+
+@enduml
