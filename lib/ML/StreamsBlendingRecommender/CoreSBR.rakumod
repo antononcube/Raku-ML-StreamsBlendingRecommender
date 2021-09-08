@@ -1,6 +1,7 @@
 use v6;
 
 use Text::CSV;
+use Data::Reshapers::CrossTabulate;
 use ML::StreamsBlendingRecommender::AbstractSBR;
 use ML::StreamsBlendingRecommender::UtilityFunctions;
 
@@ -157,21 +158,29 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     #| Make the inverse indexes that correspond to the SMR matrix.
     #| * C<$object> Should the result be an object or not?
-    method makeTagInverseIndexes(Bool :$object = True) {
+    multi method makeTagInverseIndexes(Bool :$object = True) {
 
         ## Split into a hash by tag type.
-        my %inverseIndexGroups = @.SMRMatrix.classify({ $_<TagType> });
+        #my %inverseIndexGroups = @.SMRMatrix.classify({ $_<TagType> });
 
         ## For each tag type split into hash by Value.
-        my %inverseIndexesPerTagType = %inverseIndexGroups.pairs.map({ $_.key => $_.value.classify({ $_<Value> }) });
+        #my %inverseIndexesPerTagType = %inverseIndexGroups.pairs.map({ $_.key => $_.value.classify({ $_<Value> }) });
+
+        ## The following line does what the commented out lines above do.
+        my Hash %inverseIndexesPerTagType = @.SMRMatrix.classify({ $_<TagType Value> });
 
         ## Re-make each array of hashes into a hash.
         %inverseIndexesPerTagType =
-                %inverseIndexesPerTagType.pairs.map({ $_.key => $_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight> })) }) });
+                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight> })) })) });
 
         ## Make it a hash of hashes of mixes.
         %inverseIndexesPerTagType =
                 Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ Hash($_) }));
+
+        self.makeTagInverseIndexes( %inverseIndexesPerTagType, :$object )
+    }
+
+    multi method makeTagInverseIndexes( %inverseIndexesPerTagType, Bool :$object = True) {
 
         ## Derive the tag type to tags hash map.
         %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys }));
@@ -188,6 +197,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
         %!itemInverseIndexes = %();
 
         if $object { self } else { True }
+    }
+
+    #| Synonym of makeTagInverseIndexes
+    method makeTagInverseIndexesFromLongForm(*@args) {
+        self.makeTagInverseIndexes(!@args)
     }
 
     ##========================================================
@@ -217,6 +231,53 @@ class ML::StreamsBlendingRecommender::CoreSBR
         if $object { self } else { True }
     }
     #| I.e. make inverse indexes that correspond to the rows of the SMR matrix.
+
+    ##========================================================
+    ## Make from dataset
+    ##========================================================
+    method makeTagInverseIndexesFromWideForm( Hash @data,
+                                              :$tagTypes = *,
+                                              Str:D :$itemColumnName = @data[0].keys[0],
+                                              Bool :$addTagTypesToColumnNames = True,
+                                              Str:D :$sep = ":",
+                                              Bool :$object ) {
+
+        ## Get the tag types.
+        my Str:D @tagTypesLocal;
+
+        if $tagTypes.isa(Whatever) {
+            @tagTypesLocal = @data[0].keys.grep({ $_ ne $itemColumnName })
+        } else {
+            try {
+                @tagTypesLocal = |$tagTypes;
+            }
+
+            if $! {
+                note 'The argument tagTypes is expected to be a positional of strings or Whatever.';
+                return do if $object { Nil } else { False }
+            }
+        }
+
+        ## Cross-tabulate for each tag type.
+        my %matrices = do for @tagTypesLocal -> $tagType {
+
+            ## Cross-tabulate tag-vs-item.
+            my %res = Data::Reshapers::CrossTabulate::cross-tabulate( @data, $tagType, $itemColumnName );
+
+            say %res;
+
+            ## If specified add the tag type to the tag-keys.
+            if $addTagTypesToColumnNames {
+                %res = %res.map({ $tagType ~ $sep ~ $_.key => $_.value });
+            }
+
+            ## Make a pair
+            $tagType => %(%res.map({ $_.key => Mix($_.value)}))
+        }
+
+        ## Finish the tag inverse index making.
+        self.makeTagInverseIndexes( %matrices, :$object );
+    }
 
     ##========================================================
     ## Profile
@@ -337,7 +398,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Normalize the inverse indexes per tag type.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
     #| * C<$object> Should the result be an object or not?
-    method normalizePerTagType($normSpec, Bool :$object = True) {
+    method normalizePerTagType($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Find norms per tag type.
         my %norms =
@@ -369,7 +430,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Normalize the inverse indexes per tag type per item.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
     #| * C<$object> Should the result be an object or not?
-    method normalizePerTagTypePerItem($normSpec, Bool :$object = True) {
+    method normalizePerTagTypePerItem($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Instead of working with combined keys (tagType item)
         ## we loop over the tag types.
@@ -417,7 +478,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Normalize the inverse indexes per tag.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
     #| * C<$object> Should the result be an object or not?
-    method normalizePerTag($normSpec, Bool :$object = True) {
+    method normalizePerTag($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Normalize.
         %!tagInverseIndexes =
@@ -457,7 +518,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Compute global weights for the keys of the inverse indexes.
     #| * C<$spec> Global weight function spec; one of C<<IDF GFIDF Binary None Normal ColumnStochastic Sum>>.
     #| * C<$object> Should the result be an object or not?
-    method globalWeights($spec, Bool :$object = True) {
+    method globalWeights($spec = 'IDF', Bool :$object = True) {
 
         my %colSums = Hash(%!tagInverseIndexes.keys Z=> %!tagInverseIndexes.values>>.total);
         %colSums = %colSums.deepmap({ $_ > 0 ?? $_ !! $_ });
@@ -466,7 +527,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         ## Main switch
         given $spec {
-            when 'IDF' {
+            when $_ eq 'IDF' or $_.isa(Whatever) {
                 %!globalWeights = %colSums.deepmap({ log($nrows / $_) })
             }
 
