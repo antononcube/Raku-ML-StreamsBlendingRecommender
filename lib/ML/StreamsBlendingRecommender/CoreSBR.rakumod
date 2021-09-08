@@ -225,6 +225,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
         self.profile(Mix(@items), :$normalize, :$object, :$warn)
     }
 
+    multi method profile(Str $item, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.profile( Mix([$item]), :$normalize, :$object, :$warn)
+    }
+
     multi method profile(Mix:D $items, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
 
         ## Transpose inverse indexes if needed
@@ -253,7 +257,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %itemMix.sort({ -$_.value });
 
         ## Result
-        self.value = @res;
+        self.setValue(@res);
 
         if $object { self } else { @res }
     }
@@ -269,6 +273,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$warn> Should warnings be issued or not?
     multi method recommend(@items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         self.recommend(Mix(@items), $nrecs, :$normalize, :$object, :$warn)
+    }
+
+    multi method recommend($item, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.recommend(Mix([$item]), $nrecs, :$normalize, :$object, :$warn)
     }
 
     multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
@@ -289,6 +297,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
         self.recommendByProfile(Mix(@prof), $nrecs, :$normalize, :$object, :$warn)
     }
 
+    multi method recommendByProfile(Str $profTag, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
+        self.recommendByProfile(Mix([$profTag]), $nrecs, :$normalize, :$object, :$warn)
+    }
+
     multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
 
         ## Make sure tags are known
@@ -296,8 +308,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $profQuery.elems == 0 and $warn {
             warn 'None of the profile tags is known in the recommender.';
-            self.value = %();
-            return do if $object { self } else { self.value }
+            self.setValue(%());
+            return do if $object { self } else { self.takeValue() }
         }
 
         if $profQuery.elems < $prof.elems and $warn {
@@ -314,9 +326,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %profMix.sort({ -$_.value });
 
         ## Result
-        self.value = do if $nrecs < @res.elems { @res.head($nrecs) } else { @res };
+        self.setValue( do if $nrecs < @res.elems { @res.head($nrecs) } else { @res } );
 
-        if $object { self } else { $.value }
+        if $object { self } else { self.takeValue() }
     }
 
     ##========================================================
