@@ -73,7 +73,7 @@ $sbrWithLSAObj.LSA = $sbrLSAObj;
 #                "perambulate formic acquired",
 #                10):!object;
 
-my $tagsQuery =  ["ApplicationArea:Aviation", "DataType:TimeSeries"];
+my $tagsQuery =  <ApplicationArea:Aviation DataType:TimeSeries>;
 my $query = 'airline time series';
 
 say "-" x 30;
