@@ -11,6 +11,7 @@
   "license": "GPL-3.0-or-later",
   "provides": {
     "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
+    "ML::StreamsBlendingRecommender::AbstractSBR": "lib/ML/StreamsBlendingRecommender/AbstractSBR.rakumod",
     "ML::StreamsBlendingRecommender::CoreSBR": "lib/ML/StreamsBlendingRecommender/CoreSBR.rakumod",
     "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod",
     "ML::StreamsBlendingRecommender::LSAEndowedSBR": "lib/ML/StreamsBlendingRecommender/LSAEndowedSBR.rakumod",
