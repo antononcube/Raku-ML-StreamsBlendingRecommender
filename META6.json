@@ -19,7 +19,8 @@
     "ML::StreamsBlendingRecommender::UtilityFunctions": "lib/ML/StreamsBlendingRecommender/UtilityFunctions.rakumod"
   },
   "depends": [
-    "Text::CSV"
+    "Text::CSV",
+    "Data::Reshapers"
   ],
   "build-depends": [],
   "test-depends": [],
