@@ -18,15 +18,16 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     ##========================================================
     ## Norm
     ##========================================================
-    multi method norm(Associative $mix, Str $spec = "euclidean") returns Numeric {
+
+    multi method norm(Associative $mix, $spec = 'euclidean') returns Numeric {
         self.norm($mix.values, $spec)
     }
 
-    multi method norm(@vec, Str $spec = 'euclidean') returns Numeric {
+    multi method norm(@vec, $spec = 'euclidean') returns Numeric {
         given $spec {
             when $_ (elem) <max-norm inf-norm inf infinity> { @vec.map({ abs($_) }).max }
-            when $_ (elem) <one-norm one sum> { @vec.map({ abs($_) }).sum }
-            when $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
+            when $_.Str eq '1' or $_ (elem) <one-norm one sum> { @vec.map({ abs($_) }).sum }
+            when $_.isa(Whatever) or $_.Str eq '2' or $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
             default { die "Unknown norm specification '$spec'."; }
         }
     }
@@ -34,11 +35,11 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     ##========================================================
     ## Normalize
     ##========================================================
-    multi method normalize(Associative $mix, Str $spec = "euclidean") {
+    multi method normalize(Associative $mix, $spec = "euclidean") {
         $spec eq 'none' ?? $mix !! $mix <<*>> safeInversion(self.norm($mix, $spec))
     }
 
-    multi method normalize(@vec, Str $spec = 'euclidean') {
+    multi method normalize(@vec, $spec = 'euclidean') {
         $spec eq 'none' ?? @vec !! @vec <<*>> safeInversion(self.norm(@vec, $spec))
     }
 }
