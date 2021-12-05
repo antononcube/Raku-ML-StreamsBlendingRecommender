@@ -1,6 +1,6 @@
 class ML::StreamsBlendingRecommender::AbstractSBR {
 
-    has $!value is rw;
+    has $!value;
 
     method setValue($arg) {
         $!value = $arg;
