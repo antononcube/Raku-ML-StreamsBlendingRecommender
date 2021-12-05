@@ -4,7 +4,9 @@ use lib '.';
 use ML::StreamsBlendingRecommender::CoreSBR;
 
 ##===========================================================
-my Str $fileName =  $*CWD.Str ~ '/resources/' ~ 'dfSMRMatrixTitanic-Freq.csv';
+#my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'dfSMRMatrixTitanic-Freq.csv';
+#my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfSMRMatrix.csv';
+my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfSMRMatrix.csv';
 
 my $sbrObj = ML::StreamsBlendingRecommender::CoreSBR.new;
 
@@ -24,13 +26,19 @@ say '$sbrObj.takeInverseIndexes.keys = ', $sbrObj.takeTagInverseIndexes.keys;
 
 #say $sbrObj.recommendByProfile( <male 1st survived>, 12 ).takeValue;
 
-say $sbrObj.recommendByProfile( ["male", "1st", "survived"], 12 ).takeValue;
+say "-" x 60;
 
-say "-" x 30;
+#my $recs = $sbrObj.recommendByProfile( ["Good:milk", "Country:denmark", "UserID:frehvojwf"], 10 ):!object;
+my $recs = $sbrObj.recommendByProfile( ["ApplicationArea:Aviation", "DataType:TimeSeries"], 10 ):!object;
 
-my %recs = $sbrObj.recommendByProfile( Mix( '1st' => 1.2, 'survived' => 1, 'male' => 1.1), 100 ).takeValue;
+say $recs;
 
-my $resKeys = %recs.grep( *.value > 3 ).sort( *.key ).hash.keys.sort;
+say "-" x 60;
+
+#my %recs = $sbrObj.recommendByProfile( Mix( 'Good:milk' => 1.2, 'Country:china' => 1), 40 ):!object;
+my %recs = $sbrObj.recommendByProfile( Mix( 'DataType:TimeSeries' => 1.2, 'ColumnHeading:Tension' => 1), 40 ):!object;
+
+my $resKeys = $recs.grep( *.value > 3 ).pairs.sort({ -$_.value });
 
 say '|$resKeys|: ', $resKeys.elems, ' $resKeys:', $resKeys;
 
