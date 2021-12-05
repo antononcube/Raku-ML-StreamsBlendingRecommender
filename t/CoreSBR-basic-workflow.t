@@ -6,15 +6,11 @@ use Test;
 
 plan 3;
 
-#my Str $fileNameFreq = %?RESOURCES<dfSMRMatrixTitanic-Freq.csv>.Str;
-#my Str $fileNameIDF = %?RESOURCES<dfSMRMatrixTitanic-IDF.csv>.Str;
-
 ##-----------------------------------------------------------
 ## Creation and ingestion
 ##-----------------------------------------------------------
 
-#my Str $fileNameFreq = $*CWD.Str ~ '/resources/' ~ 'dfSMRMatrixTitanic-Freq.csv';
-my Str $fileNameIDF = $*CWD.Str ~ '/resources/' ~ 'dfSMRMatrixTitanic-IDF.csv';
+my Str $fileNameIDF = $*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfSMRMoatrix.csv';
 
 my $sbrFreq = ML::StreamsBlendingRecommender::CoreSBR.new;
 my $sbrIDF = ML::StreamsBlendingRecommender::CoreSBR.new;
