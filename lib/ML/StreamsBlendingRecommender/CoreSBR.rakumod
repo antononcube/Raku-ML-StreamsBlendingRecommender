@@ -1,7 +1,7 @@
 use v6;
 
 use Text::CSV;
-use Data::Reshapers::CrossTabulate;
+use Data::Reshapers;
 use ML::StreamsBlendingRecommender::AbstractSBR;
 use ML::StreamsBlendingRecommender::UtilityFunctions;
 
@@ -262,7 +262,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my %matrices = do for @tagTypesLocal -> $tagType {
 
             ## Cross-tabulate tag-vs-item.
-            my %res = Data::Reshapers::CrossTabulate::cross-tabulate( @data, $tagType, $itemColumnName );
+            my %res = Data::Reshapers::cross-tabulate( @data, $tagType, $itemColumnName );
 
             say %res;
 
