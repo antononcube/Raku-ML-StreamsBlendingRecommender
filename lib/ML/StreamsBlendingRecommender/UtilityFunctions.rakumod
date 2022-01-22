@@ -1,3 +1,5 @@
+use Text::CSV;
+
 role ML::StreamsBlendingRecommender::UtilityFunctions {
 
     ##========================================================
@@ -27,7 +29,8 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
         given $spec {
             when $_ (elem) <max-norm inf-norm inf infinity> { @vec.map({ abs($_) }).max }
             when $_.Str eq '1' or $_ (elem) <one-norm one sum> { @vec.map({ abs($_) }).sum }
-            when $_.isa(Whatever) or $_.Str eq '2' or $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
+            when $_.isa(Whatever) or $_
+                    .Str eq '2' or $_ (elem) <euclidean cosine two-norm two> { sqrt(sum(@vec <<*>> @vec)) }
             default { die "Unknown norm specification '$spec'."; }
         }
     }
@@ -41,5 +44,50 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
 
     multi method normalize(@vec, $spec = 'euclidean') {
         $spec eq 'none' ?? @vec !! @vec <<*>> safeInversion(self.norm(@vec, $spec))
+    }
+
+    ##========================================================
+    ## IngestCSVFile
+    ##========================================================
+    #| Ingest CSV file.
+    #| * C<$fileName> CSV file name.
+    #| * C<$mapper> Maps internal to actual column names.
+    #| * C<$naive-parsing> Should naive parsing be used or not?
+    #| * C<$sep> Separator of CSV fields.
+    method ingestCSVFile(Str $fileName,
+                         %mapper = %(Item => 'Item',
+                                     TagType => 'TagType',
+                                     Value => 'Value',
+                                     Weight => 'Weight'),
+                         Bool :$naive-parsing = False,
+                         Str :$sep = ','
+            --> Array) {
+
+        my @res;
+
+        if $naive-parsing {
+            # It 7-10 faster to use this ad-hoc code than the standard Text::CSV workflow.
+            # But some tags might have commas (i.e. the separator) in them.
+            # Also, string values should not have surrounding quotes.
+            my $fileHandle = $fileName.IO;
+            my Str @records = $fileHandle.lines;
+            my @colNames = @records[0].split($sep);
+            @res = @records[1 .. *- 1].map({ %( @colNames Z=> $_.split($sep)) });
+        } else {
+            my $csv = Text::CSV.new;
+            @res = $csv.csv(in => $fileName, headers => 'auto');
+        }
+
+        my @expectedColumnNames = %mapper.values;
+
+        if (@res[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
+            warn "The ingested CSV file does not have the expected column names: { @expectedColumnNames.join(', ') }.";
+            return Nil;
+        }
+
+        my %mapperInv = %mapper.invert;
+        @res = @res>>.map({ %mapperInv{.key}:exists ?? (%mapperInv{.key} => .value) !! $_ })>>.Hash;
+
+        return @res;
     }
 }

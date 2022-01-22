@@ -114,7 +114,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Ingest a SMR matrix CSV file
     ##========================================================
-    #| Ingest SMR matrix CSV file ingestion.
+    #| Ingest SMR matrix CSV file.
     #| * C<$fileName> CSV file name.
     #| * C<$itemColumnName> The items column name.
     #| * C<$tagTypeColumnName> The tag types column name.
@@ -127,22 +127,15 @@ class ML::StreamsBlendingRecommender::CoreSBR
                                   Str :$tagTypeColumnName = 'TagType',
                                   Str :$valueColumnName = 'Value',
                                   Str :$weightColumnName = 'Weight',
-                                  Bool :$make = False, Bool :$object = True) {
+                                  Bool :$make = False,
+                                  Bool :$naive-parsing = False,
+                                  Str :$sep = ',',
+                                  Bool :$object = True) {
 
-        my $csv = Text::CSV.new;
-        @.SMRMatrix = $csv.csv(in => $fileName, headers => 'auto');
+        my $res = self.ingestCSVFile($fileName, %(Item => $itemColumnName, TagType => $tagTypeColumnName, Value => $valueColumnName, Weight => $weightColumnName), :$naive-parsing, :$sep);
+        if not so $res { return Nil; }
 
-        my @expectedColumnNames = ($itemColumnName, $tagTypeColumnName, $valueColumnName, $weightColumnName);
-
-        if (@.SMRMatrix[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
-            warn 'The ingested CSV file does not have the expected column names:', @expectedColumnNames.join(', '), '.';
-            return Nil
-        }
-
-        @.SMRMatrix =
-                do for @.SMRMatrix -> %row {
-                    {Item => %row{$itemColumnName}, TagType => %row{$tagTypeColumnName}, Value => %row{$valueColumnName}, Weight => %row{$weightColumnName}}
-                };
+        @.SMRMatrix = |$res;
 
         %!itemInverseIndexes = %();
         %!tagInverseIndexes = %();
@@ -384,7 +377,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         if $normalize { %profMix = self.normalize(%profMix, 'max-norm') }
 
         ## Sort
-        my @res = %profMix.sort({ -$_.value });
+        my @res = %profMix.sort({ -$_.value }).Array;
 
         ## Result
         self.setValue( do if $nrecs < @res.elems { @res.head($nrecs) } else { @res } );

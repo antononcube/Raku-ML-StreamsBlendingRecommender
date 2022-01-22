@@ -18,7 +18,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Ingest a LSA matrix CSV file
     ##========================================================
-    #| Ingest LSA matrix CSV file ingestion.
+    #| Ingest LSA matrix CSV file.
     #| * C<$fileName> CSV file name.
     #| * C<$topicColumnName> The topics column name.
     #| * C<$wordColumnName> The words column name.
@@ -29,17 +29,13 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
                                   Str :$topicColumnName = 'Topic',
                                   Str :$wordColumnName = 'Word',
                                   Str :$weightColumnName = 'Weight',
-                                  Bool :$make = False, Bool :$object = True) {
+                                  Bool :$make = False,
+                                  Bool :$naive-parsing = False,
+                                  Str :$sep = ',',
+                                  Bool :$object = True) {
 
-        my $csv = Text::CSV.new;
-        @.SMRMatrix = $csv.csv(in => $fileName, headers => 'auto');
-
-        my @expectedColumnNames = ($topicColumnName, $wordColumnName, $weightColumnName);
-
-        if (@.SMRMatrix[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
-            warn 'The ingested CSV file does not have the expected column names:', @expectedColumnNames.join(', '), '.';
-            return Nil
-        }
+        @.SMRMatrix = self.ingestCSVFile($fileName, %(Topic => $topicColumnName, Word => $wordColumnName, Weight => $weightColumnName), :$naive-parsing, :$sep);
+        if not so @.SMRMatrix { return Nil; }
 
         @.SMRMatrix =
                 do for @.SMRMatrix -> %row {
