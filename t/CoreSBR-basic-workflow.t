@@ -10,7 +10,7 @@ plan 3;
 ## Creation and ingestion
 ##-----------------------------------------------------------
 
-my Str $fileNameIDF = $*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfSMRMoatrix.csv';
+my Str $fileNameIDF = $*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfSMRMatrix.csv';
 
 my $sbrFreq = ML::StreamsBlendingRecommender::CoreSBR.new;
 my $sbrIDF = ML::StreamsBlendingRecommender::CoreSBR.new;
@@ -29,12 +29,12 @@ ok $sbrIDF.ingestSMRMatrixCSVFile($fileNameIDF, :make).takeSMRMatrix.elems > 800
 ##-----------------------------------------------------------
 ## Recommendations by profile array
 ##-----------------------------------------------------------
-my %recsIDF = $sbrIDF.recommendByProfile(['1st', 'survived', 'male'], 120, :!object);
+my %recsIDF = $sbrIDF.recommendByProfile(['Country:china', 'Goods:cars'], 12, :!object);
 my $resKeysIDF = %recsIDF.grep( *.value >= 3 ).sort( *.key ).hash.keys.sort;
 
 #my $expected = $sbrIDF.takeSMRMatrix().filter( {} );
 
-ok %recsIDF.elems == 120,
+ok %recsIDF.elems == 12,
         'recsIDF.elems';
 
 done-testing;
