@@ -1,29 +1,27 @@
 {
-  "perl": "6.d",
   "name": "ML::StreamsBlendingRecommender",
-  "api": "1",
-  "auth": "github:antononcube",
-  "version": "0.1.0",
   "description": "Streams blending recommender framework.",
+  "version": "0.1.0",
+  "perl": "6.d",
   "authors": [
     "Anton Antonov"
   ],
-  "license": "GPL-3.0-or-later",
-  "provides": {
-    "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
-    "ML::StreamsBlendingRecommender::AbstractSBR": "lib/ML/StreamsBlendingRecommender/AbstractSBR.rakumod",
-    "ML::StreamsBlendingRecommender::CoreSBR": "lib/ML/StreamsBlendingRecommender/CoreSBR.rakumod",
-    "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod",
-    "ML::StreamsBlendingRecommender::LSAEndowedSBR": "lib/ML/StreamsBlendingRecommender/LSAEndowedSBR.rakumod",
-    "ML::StreamsBlendingRecommender::LSATopicSBR": "lib/ML/StreamsBlendingRecommender/LSATopicSBR.rakumod",
-    "ML::StreamsBlendingRecommender::UtilityFunctions": "lib/ML/StreamsBlendingRecommender/UtilityFunctions.rakumod"
-  },
+  "auth": "github:antononcube",
   "depends": [
     "Text::CSV",
     "Data::Reshapers"
   ],
   "build-depends": [],
   "test-depends": [],
+  "provides": {
+    "ML::StreamsBlendingRecommender": "lib/ML/StreamsBlendingRecommender.rakumod",
+    "ML::StreamsBlendingRecommender::AbstractSBR": "lib/ML/StreamsBlendingRecommender/AbstractSBR.rakumod",
+    "ML::StreamsBlendingRecommender::CompositeSBR": "lib/ML/StreamsBlendingRecommender/CompositeSBR.rakumod",
+    "ML::StreamsBlendingRecommender::CoreSBR": "lib/ML/StreamsBlendingRecommender/CoreSBR.rakumod",
+    "ML::StreamsBlendingRecommender::LSAEndowedSBR": "lib/ML/StreamsBlendingRecommender/LSAEndowedSBR.rakumod",
+    "ML::StreamsBlendingRecommender::LSATopicSBR": "lib/ML/StreamsBlendingRecommender/LSATopicSBR.rakumod",
+    "ML::StreamsBlendingRecommender::UtilityFunctions": "lib/ML/StreamsBlendingRecommender/UtilityFunctions.rakumod"
+  },
   "resources": [
     "RandomGoods-dfLSATopicWordMatrix.csv",
     "RandomGoods-dfLSAWordGlobalWeights.csv",
@@ -35,13 +33,16 @@
     "WLExampleData-dfSMRMatrix.csv",
     "WLExampleData-dfStemRules.csv"
   ],
+  "license": "GPL-3.0-or-later",
   "tags": [
     "LSA",
     "LSI",
     "ML",
+    "SMR",
     "machine learning",
     "recommendations",
     "recommender"
   ],
+  "api": "1",
   "source-url": "https://github.com/antononcube/Raku-ML-StreamsBlendingRecommender.git"
 }
