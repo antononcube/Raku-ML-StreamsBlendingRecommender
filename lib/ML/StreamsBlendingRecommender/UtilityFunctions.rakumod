@@ -1,4 +1,6 @@
 use Text::CSV;
+use Data::Reshapers;
+use Data::Reshapers::Predicates;
 
 role ML::StreamsBlendingRecommender::UtilityFunctions {
 
@@ -89,5 +91,36 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
         @res = @res>>.map({ %mapperInv{.key}:exists ?? (%mapperInv{.key} => .value) !! $_ })>>.Hash;
 
         return @res;
+    }
+
+    ##========================================================
+    ## Join across
+    ##========================================================
+    method joinAcross( @dataset, :$by is copy = Whatever, Bool :$object = True ) {
+
+        if not is-array-of-hashes(@dataset) {
+            warn 'The first argument is expected to be an array of hashes.';
+            return $object ?? self !! Nil;
+        }
+
+        if $by.isa(Whatever) {
+
+            given @dataset[0].keys {
+                when 'id' (elem) $_>>.lc { $by = $_.first({ $_.lc eq 'id' }) }
+                when 'item' (elem) $_>>.lc { $by = $_.first({ $_.lc eq 'item' }) }
+                default { $by = @dataset[0].keys[0] }
+            }
+            warn  "Heuristically picking the joining column to be $by.";
+        }
+
+        my $recs = self.takeValue.Array;
+        if is-array-of-pairs($recs) {
+            self.setValue( join-across($recs.map({ %( $by => $_.key, Score => $_.value ) }), @dataset, $by).sort(-*<Score>) );
+        } else {
+            warn "Object's value is not an array of pairs.";
+            return $object ?? self !! Nil;
+        }
+
+        if $object { self } else { self.takeValue() }
     }
 }
