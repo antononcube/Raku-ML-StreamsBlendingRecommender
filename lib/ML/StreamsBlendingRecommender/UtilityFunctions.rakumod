@@ -96,7 +96,7 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     ##========================================================
     ## Join across
     ##========================================================
-    method joinAcross( @dataset, :$by is copy = Whatever, Bool :$object = True ) {
+    multi method joinAcross( $recs, @dataset, :$by is copy = Whatever, Bool :$object = True ) {
 
         if not is-array-of-hashes(@dataset) {
             warn 'The first argument is expected to be an array of hashes.';
@@ -108,19 +108,30 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
             given @dataset[0].keys.Array {
                 when 'id' (elem) $_>>.lc { $by = $_.first({ $_.lc eq 'id' }) }
                 when 'item' (elem) $_>>.lc { $by = $_.first({ $_.lc eq 'item' }) }
-                default { $by = @dataset[0].keys[0] }
+                default { $by = @dataset[0].keys.Array[0] }
             }
-            warn  "Heuristically picking the joining column to be '$by'.";
+            warn "Heuristically picking the joining column to be '$by'.";
         }
 
-        my $recs = self.takeValue.Array;
         if is-array-of-pairs($recs) {
             self.setValue( join-across($recs.map({ %( $by => $_.key, Score => $_.value ) }), @dataset, $by).sort(-*<Score>) );
         } else {
-            warn "Object's value is not an array of pairs.";
+            warn "The first argument is not an array of pairs.";
             return $object ?? self !! Nil;
         }
 
         if $object { self } else { self.takeValue() }
     }
+
+    multi method joinAcross( @dataset, :$by is copy = Whatever, Bool :$object = True ) {
+
+        my $recs = self.takeValue.Array;
+
+        if is-array-of-pairs($recs) {
+            return self.joinAcross($recs, @dataset, :$by, :$object)
+        }
+        warn "Object's value is not an array of pairs.";
+        return $object ?? self !! Nil;
+    }
+
 }
