@@ -12,8 +12,8 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Data members
     ##========================================================
-    has %!GlobalWeights;
-    has %!StemRules;
+    has %.GlobalWeights is rw;
+    has %.StemRules is rw;
 
     ##========================================================
     ## Ingest a LSA matrix CSV file
@@ -163,7 +163,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         }
 
         ## Result
-        if $object { self.value = %res; self } else { %res }
+        if $object { self.setValue(%res); self } else { %res }
     }
     #| Uses C<LSATopicSBR::representByTerms>.
 
@@ -178,8 +178,11 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
     method recommendByText( Str:D $text, Int:D $nrecs = 12, :$splitPattern = /\s+/, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
-        self.representByTopics( $text, $nrecs, :$splitPattern, :$normalize, :$object, :$warn)
+        self.representByTopics( $text, $nrecs, :$splitPattern, :$normalize, :object, :$warn);
+        self.setValue( self.takeValue().grep({ $_.value > 0 }).Array );
+        ## Result
+        if $object { self } else { self.takeValue }
     }
-    #| Synonym of C<LSATopicsSBR::representByTopics>.
+    #| Uses C<LSATopicsSBR::representByTopics> and returns the topics with positive scores.
 
 }
