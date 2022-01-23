@@ -380,7 +380,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %profMix.sort({ -$_.value }).Array;
 
         ## Result
-        self.setValue( do if $nrecs < @res.elems { @res.head($nrecs) } else { @res } );
+        self.setValue( do if $nrecs < @res.elems { @res.head($nrecs).Array } else { @res } );
 
         if $object { self } else { self.takeValue() }
     }
