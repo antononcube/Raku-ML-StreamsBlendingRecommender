@@ -105,12 +105,12 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
 
         if $by.isa(Whatever) {
 
-            given @dataset[0].keys {
+            given @dataset[0].keys.Array {
                 when 'id' (elem) $_>>.lc { $by = $_.first({ $_.lc eq 'id' }) }
                 when 'item' (elem) $_>>.lc { $by = $_.first({ $_.lc eq 'item' }) }
                 default { $by = @dataset[0].keys[0] }
             }
-            warn  "Heuristically picking the joining column to be $by.";
+            warn  "Heuristically picking the joining column to be '$by'.";
         }
 
         my $recs = self.takeValue.Array;
