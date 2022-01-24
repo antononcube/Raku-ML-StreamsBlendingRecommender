@@ -557,6 +557,42 @@ class ML::StreamsBlendingRecommender::CoreSBR
     }
 
     ##========================================================
+    ## Classify
+    ##========================================================
+    multi method classifyByProfile( Str $tagType, @profile ) {
+        return self.classifyByProfile( $tagType, %( @profile X=> 1.0 ) );
+    }
+
+    multi method classifyByProfile( Str $tagType, %profile ) {
+        note "Classify by profile is not implemented yet.";
+        return self;
+    }
+
+    ##========================================================
+    ## Prove by metadata
+    ##========================================================
+    multi method proveByMetadata( @profile, @items ) {
+        return self.proveByMetadata( %( @profile X=> 1.0 ), @items );
+    }
+
+    multi method proveByMetadata( %profile, @items ) {
+        note "Proving by metadata is not implemented yet.";
+        return self;
+    }
+
+    ##========================================================
+    ## Prove by history
+    ##========================================================
+    multi method proveByHistory( @history, @items ) {
+        return self.proveByHistory( %( @history X=> 1.0 ), @items );
+    }
+
+    multi method proveByHistory( %history, @items ) {
+        note "Proving by history is not implemented yet.";
+        return self;
+    }
+
+    ##========================================================
     ## Remove tag type(s)
     ##========================================================
     #| Remove tag types.
@@ -578,5 +614,42 @@ class ML::StreamsBlendingRecommender::CoreSBR
         %!tagTypeToTags{@tagTypes}:delete;
 
         self
+    }
+
+    ##========================================================
+    ## Filter matrix
+    ##========================================================
+    multi method filterMatrix( %profile ) {
+        return self.filterMatrix( %profile.values );
+    }
+
+    multi method filterMatrix( @profile ) {
+        note "Filter matrix is not implemented yet.";
+        return self;
+    }
+
+    ##========================================================
+    ## Recommenders algebra -- Join
+    ##========================================================
+    method join( $smr2, Str $type = 'same') {
+        my @expectedJoinTypes = <same outer union inner left>;
+        note "Recommender joining is not implemented yet.";
+        return self;
+    }
+
+    ##========================================================
+    ## Recommenders algebra -- Annex matrix
+    ##========================================================
+    method annexSubMatrix( %matrixInverseIndexes, Str $newTagType ) {
+        note "Annexing of a sub-matrix is not implemented yet.";
+        return self;
+    }
+
+    ##========================================================
+    ## Recommenders algebra -- To tag type recommender
+    ##========================================================
+    method makeTagTypeRecommender( Str $tagTypeTo, @tagTypes ) {
+        note "Tag type recommender making is not implemented yet.";
+        return self;
     }
 }
