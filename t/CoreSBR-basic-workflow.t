@@ -29,7 +29,7 @@ ok $sbrIDF.ingestSMRMatrixCSVFile($fileNameIDF, :make).takeSMRMatrix.elems > 800
 ##-----------------------------------------------------------
 ## Recommendations by profile array
 ##-----------------------------------------------------------
-my %recsIDF = $sbrIDF.recommendByProfile(['Country:china', 'Goods:cars'], 12, :!object);
+my %recsIDF = $sbrIDF.recommendByProfile(['Country:china', 'Good:cars'], 12, :!object);
 my $resKeysIDF = %recsIDF.grep( *.value >= 3 ).sort( *.key ).hash.keys.sort;
 
 #my $expected = $sbrIDF.takeSMRMatrix().filter( {} );
