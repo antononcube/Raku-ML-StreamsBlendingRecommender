@@ -204,6 +204,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$object> Should the result be an object or not?
     method transposeTagInverseIndexes(Bool :$object = True) {
 
+        ## WARNING! -- This function has to be refactored to use the role's transpose.
+
         ## Transpose tag inverse indexes into item inverse indexes.
 
         my $items = %!tagInverseIndexes.values>>.keys.flat.unique;
@@ -223,7 +225,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $object { self } else { True }
     }
-    #| I.e. make inverse indexes that correspond to the rows of the SMR matrix.
+    #= I.e. make inverse indexes that correspond to the rows of the SMR matrix.
 
     ##========================================================
     ## Make from dataset
@@ -491,7 +493,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     #| Unitize the inverse indexes.
     #| * C<$object> Should the result be an object or not?
-    method unitize(Bool :$object = True) {
+    multi method unitize(Bool :$object = True) {
 
         ## Unitize.
         %!tagInverseIndexes =
@@ -559,13 +561,67 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Classify
     ##========================================================
-    multi method classifyByProfile( Str $tagType, @profile ) {
-        return self.classifyByProfile( $tagType, %( @profile X=> 1.0 ) );
+    multi method classifyByProfile( Str $tagType, @profile, *%args ) {
+        return self.classifyByProfile( $tagType, %( @profile X=> 1.0 ).Mix, |%args );
     }
 
-    multi method classifyByProfile( Str $tagType, %profile ) {
-        note "Classify by profile is not implemented yet.";
-        return self;
+    multi method classifyByProfile( Str $tagType,
+                                    Mix:D $profile,
+                                    UInt :$n-top-nearest-neighbors = 100,
+                                    Bool :$voting = False,
+                                    Bool :$drop_zero_scored_labels = True,
+                                    :$max_number_of_labels = Whatever,
+                                    Bool :$normalize = True,
+                                    Bool :$ignore-unknown = False,
+                                    Bool :$object = True) {
+
+        # Verify tag_type
+        if $tagType ∉ %!tagTypeToTags.keys {
+            die "The value of the first argument $tagType is not a known tag type.";
+        }
+
+        # Compute the recommendations
+        my %recs = self.recommendByProfile($profile, $n-top-nearest-neighbors, warn => !$ignore-unknown):!object;
+
+        # "Nothing" result
+        if %recs.elems == 0 {
+            self.setValue({});
+            return $object ?? self !! {};
+        }
+
+        # Get the tag type sub-matrix, i.e. the corresponding inverse indexes
+        #say %!tagInverseIndexes.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }).cache;
+        #my %matTagType = [ %!tagInverseIndexes.pairs.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }) ];
+        #say %!tagInverseIndexes{ |%!tagTypeToTags{$tagType} };
+        %!tagTypeToTags{$tagType}.cache;
+        my %matTagType = [|%!tagTypeToTags{$tagType}] Z=> %!tagInverseIndexes{ |%!tagTypeToTags{$tagType} };
+
+        my %tMatTagType = self.transpose(%matTagType);
+
+        # Respect voting
+        if $voting {
+            %recs = self.unitize(%recs)
+        }
+
+        ## Get scores
+        my %clRecs = [(+)] %tMatTagType{%recs.keys} Z<<*>> %recs.values;
+
+        # Drop zero scored labels
+        %clRecs = %clRecs.grep({ $_.value > 0 });
+
+        # Pick max-top labels
+        if $max_number_of_labels ~~ Numeric and $max_number_of_labels > 0 {
+            %clRecs = %clRecs.pairs.sort({ -$_.value }).head($max_number_of_labels);
+        }
+
+        # Normalize
+
+        # Reverse sort
+
+        # Result
+        self.setValue(%clRecs);
+
+        return $object ?? self !! %clRecs;
     }
 
     ##========================================================
