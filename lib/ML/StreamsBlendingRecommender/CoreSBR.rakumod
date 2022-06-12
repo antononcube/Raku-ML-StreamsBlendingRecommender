@@ -609,11 +609,6 @@ class ML::StreamsBlendingRecommender::CoreSBR
         # Drop zero scored labels
         %clRecs = %clRecs.grep({ $_.value > 0 });
 
-        # Pick max-top labels
-        if $max_number_of_labels ~~ Numeric and $max_number_of_labels > 0 {
-            %clRecs = %clRecs.pairs.sort({ -$_.value }).head($max_number_of_labels);
-        }
-
         # Normalize
         if $normalize {
             %clRecs = self.normalize(%clRecs, 'max-norm');
@@ -621,6 +616,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         # Reverse sort
         my @clRecs = %clRecs.pairs.sort({ - $_.value });
+
+        # Pick max-top labels
+        if $max_number_of_labels ~~ Numeric and $max_number_of_labels > 0 {
+            @clRecs = @clRecs.head($max_number_of_labels);
+        }
 
         # Result
         self.setValue(@clRecs);
