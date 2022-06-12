@@ -49,6 +49,54 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     }
 
     ##========================================================
+    ## Unitize
+    ##========================================================
+    multi method unitize(%index is copy -->Hash) {
+
+        ## Unitize.
+        if %index.all ~~ Associative {
+            %index =
+                do for %index.kv -> $k, $v {
+                    $k => Mix($v.keys)
+                }
+        } else {
+            %index = Mix(%index.keys).Hash
+        }
+
+        return %index;
+    }
+
+    ##========================================================
+    ## Transpose
+    ##========================================================
+    #| Transpose inverse indexes.
+    #| * C<$object> Should the result be an object or not?
+    method transpose(%tagInverseIndexes) {
+
+        ## For easier interpretation the code below is written
+        ## for transposing tag inverse indexes into item inverse indexes.
+        ## But, of course, it applies to any hash-of-mixes.
+
+        if !( %tagInverseIndexes.values.all ~~ Mix) {
+            die "The first argument is expected to be a Hash of Mix-objects.";
+        }
+
+        my $items = %tagInverseIndexes.values>>.keys.flat.unique;
+
+        my %itemInverseIndexes = Hash($items Z=> Mix());
+
+        for %tagInverseIndexes.kv -> $tag, $mix {
+            for $mix.kv -> $item, $val {
+                %itemInverseIndexes{$item}.push($tag => $val)
+            }
+        }
+
+        %itemInverseIndexes = do for %itemInverseIndexes.kv -> $item, $arr { $item => Mix($arr) };
+
+        return %itemInverseIndexes;
+    }
+
+    ##========================================================
     ## IngestCSVFile
     ##========================================================
     #| Ingest CSV file.
