@@ -615,13 +615,17 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         # Normalize
+        if $normalize {
+            %clRecs = self.normalize(%clRecs, 'max-norm');
+        }
 
         # Reverse sort
+        my @clRecs = %clRecs.pairs.sort({ - $_.value });
 
         # Result
-        self.setValue(%clRecs);
+        self.setValue(@clRecs);
 
-        return $object ?? self !! %clRecs;
+        return $object ?? self !! @clRecs;
     }
 
     ##========================================================
