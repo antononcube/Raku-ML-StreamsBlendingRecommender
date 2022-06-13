@@ -2,6 +2,7 @@ use v6;
 
 use Text::CSV;
 use Data::Reshapers;
+use Data::Reshapers::Predicates;
 use ML::StreamsBlendingRecommender::AbstractSBR;
 use ML::StreamsBlendingRecommender::UtilityFunctions;
 
@@ -176,7 +177,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     multi method makeTagInverseIndexes( %inverseIndexesPerTagType, Bool :$object = True) {
 
         ## Derive the tag type to tags hash map.
-        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys }));
+        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys.List }).List);
 
         ## Flatten the inverse index groups.
         %!tagInverseIndexes = %();
@@ -230,12 +231,12 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Make from dataset
     ##========================================================
-    method makeTagInverseIndexesFromWideForm( Hash @data,
+    method makeTagInverseIndexesFromWideForm( @data where is-array-of-hashes(@data),
                                               :$tagTypes = *,
                                               Str:D :$itemColumnName = @data[0].keys[0],
                                               Bool :$addTagTypesToColumnNames = True,
                                               Str:D :$sep = ":",
-                                              Bool :$object ) {
+                                              Bool :$object = True) {
 
         ## Get the tag types.
         my Str:D @tagTypesLocal;
@@ -258,16 +259,14 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
             ## Cross-tabulate tag-vs-item.
             my %res = Data::Reshapers::cross-tabulate( @data, $tagType, $itemColumnName );
-
-            say %res;
-
+;
             ## If specified add the tag type to the tag-keys.
             if $addTagTypesToColumnNames {
-                %res = %res.map({ $tagType ~ $sep ~ $_.key => $_.value });
+                %res = %res.map({ $tagType ~ $sep ~ $_.key => $_.value }).Array;
             }
 
             ## Make a pair
-            $tagType => %(%res.map({ $_.key => Mix($_.value)}))
+            $tagType => %(%res.map({ $_.key => Mix($_.value)}).Array)
         }
 
         ## Finish the tag inverse index making.
