@@ -259,7 +259,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
             ## Cross-tabulate tag-vs-item.
             my %res = Data::Reshapers::cross-tabulate( @data, $tagType, $itemColumnName );
-;
+
             ## If specified add the tag type to the tag-keys.
             if $addTagTypesToColumnNames {
                 %res = %res.map({ $tagType ~ $sep ~ $_.key => $_.value }).Array;
@@ -588,14 +588,12 @@ class ML::StreamsBlendingRecommender::CoreSBR
             return $object ?? self !! {};
         }
 
-        # Get the tag type sub-matrix, i.e. the corresponding inverse indexes
-        #say %!tagInverseIndexes.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }).cache;
-        #my %matTagType = [ %!tagInverseIndexes.pairs.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }) ];
-        #say %!tagInverseIndexes{ |%!tagTypeToTags{$tagType} };
-        %!tagTypeToTags{$tagType}.cache;
-        my %matTagType = [|%!tagTypeToTags{$tagType}] Z=> %!tagInverseIndexes{ |%!tagTypeToTags{$tagType} };
+        # Get the tag type sub-matrix, i.e. the corresponding inverse indexes.
+        # Not used because it seems faster to just use %!itemInverseIndexes .
+        #%!tagTypeToTags{$tagType}.cache;
+        #my %matTagType = [|%!tagTypeToTags{$tagType}] Z=> %!tagInverseIndexes{ |%!tagTypeToTags{$tagType} };
 
-        my %tMatTagType = self.transpose(%matTagType);
+        #my %tMatTagType = self.transpose(%matTagType);
 
         # Respect voting
         if $voting {
@@ -603,10 +601,14 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         ## Get scores
-        my %clRecs = [(+)] %tMatTagType{%recs.keys} Z<<*>> %recs.values;
+        if ! %!itemInverseIndexes { self.transposeTagInverseIndexes }
+        my %clRecs = [(+)] %!itemInverseIndexes{%recs.keys} Z<<*>> %recs.values;
+        %clRecs = %clRecs.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }).cache;
 
         # Drop zero scored labels
-        %clRecs = %clRecs.grep({ $_.value > 0 });
+        if $drop_zero_scored_labels {
+            %clRecs = %clRecs.grep({ $_.value > 0 }).cache;
+        }
 
         # Normalize
         if $normalize {
@@ -614,11 +616,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         # Reverse sort
-        my @clRecs = %clRecs.pairs.sort({ - $_.value });
+        my @clRecs = %clRecs.pairs.sort(-*.value);
 
         # Pick max-top labels
-        if $max_number_of_labels ~~ Numeric and $max_number_of_labels > 0 {
-            @clRecs = @clRecs.head($max_number_of_labels);
+        if $max_number_of_labels ~~ Numeric and $max_number_of_labels > 0 and $max_number_of_labels < @clRecs.elems {
+            @clRecs = @clRecs.head($max_number_of_labels).Array;
         }
 
         # Result
