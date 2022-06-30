@@ -1,0 +1,148 @@
+@startuml
+class ML::StreamsBlendingRecommender::LSAEndowedSBR  {
+  {field} $!Core
+  {field} $!LSA
+  {field} $!value
+  {method} BUILDALL
+  {method} Core
+  {method} LSA
+  {method} ingestCSVFile
+  {method} joinAcross
+  {method} norm
+  {method} normalize
+  {method} recommendByProfile
+  {method} transpose
+  {method} unitize
+}
+ML::StreamsBlendingRecommender::LSAEndowedSBR --|> ML::StreamsBlendingRecommender::AbstractSBR
+ML::StreamsBlendingRecommender::LSAEndowedSBR --|> ML::StreamsBlendingRecommender::UtilityFunctions
+
+
+class ML::StreamsBlendingRecommender::CoreSBR  {
+  {field} $!knownItems
+  {field} $!knownTags
+  {field} $!value
+  {field} %!globalWeights
+  {field} %!itemInverseIndexes
+  {field} %!tagInverseIndexes
+  {field} %!tagTypeToTags
+  {field} @!SMRMatrix
+  {method} BUILD
+  {method} BUILDALL
+  {method} SMRMatrix
+  {method} annexSubMatrix
+  {method} classifyByProfile
+  {method} clone
+  {method} filterMatrix
+  {method} globalWeights
+  {method} ingestCSVFile
+  {method} ingestSMRMatrixCSVFile
+  {method} join
+  {method} joinAcross
+  {method} makeTagInverseIndexes
+  {method} makeTagInverseIndexesFromLongForm
+  {method} makeTagInverseIndexesFromWideForm
+  {method} makeTagTypeRecommender
+  {method} norm
+  {method} normalize
+  {method} normalizePerTag
+  {method} normalizePerTagType
+  {method} normalizePerTagTypePerItem
+  {method} profile
+  {method} proveByHistory
+  {method} proveByMetadata
+  {method} recommend
+  {method} recommendByProfile
+  {method} removeTagTypes
+  {method} setGlobalWeights
+  {method} setItemInverseIndexes
+  {method} setKnownItems
+  {method} setKnownTags
+  {method} setSMRMatrix
+  {method} setTagInverseIndexes
+  {method} setTagTypeToTags
+  {method} takeGlobalWeights
+  {method} takeItemInverseIndexes
+  {method} takeKnownItems
+  {method} takeKnownTags
+  {method} takeSMRMatrix
+  {method} takeTagInverseIndexes
+  {method} takeTagTypeToTags
+  {method} transpose
+  {method} transposeTagInverseIndexes
+  {method} unitize
+}
+ML::StreamsBlendingRecommender::CoreSBR --|> ML::StreamsBlendingRecommender::AbstractSBR
+ML::StreamsBlendingRecommender::CoreSBR --|> ML::StreamsBlendingRecommender::UtilityFunctions
+
+
+class ML::StreamsBlendingRecommender::LSATopicSBR  {
+  {field} $!knownItems
+  {field} $!knownTags
+  {field} $!value
+  {field} %!GlobalWeights
+  {field} %!StemRules
+  {field} %!globalWeights
+  {field} %!itemInverseIndexes
+  {field} %!tagInverseIndexes
+  {field} %!tagTypeToTags
+  {field} @!SMRMatrix
+  {method} BUILDALL
+  {method} GlobalWeights
+  {method} StemRules
+  {method} ingestCSVFile
+  {method} ingestGlobalWeightsCSVFile
+  {method} ingestLSAMatrixCSVFile
+  {method} ingestStemRulesCSVFile
+  {method} joinAcross
+  {method} norm
+  {method} normalize
+  {method} recommendByText
+  {method} representByTerms
+  {method} representByTopics
+  {method} transpose
+  {method} unitize
+}
+ML::StreamsBlendingRecommender::LSATopicSBR --|> ML::StreamsBlendingRecommender::CoreSBR
+ML::StreamsBlendingRecommender::LSATopicSBR --|> ML::StreamsBlendingRecommender::AbstractSBR
+ML::StreamsBlendingRecommender::LSATopicSBR --|> ML::StreamsBlendingRecommender::UtilityFunctions
+
+
+class ML::StreamsBlendingRecommender::UtilityFunctions <<role>> {
+  {method} ingestCSVFile
+  {method} transpose
+}
+
+
+class ML::StreamsBlendingRecommender::CompositeSBR  {
+  {field} $!value
+  {field} %!objects
+  {field} %!value
+  {field} %!weights
+  {method} BUILDALL
+  {method} ingestCSVFile
+  {method} joinAcross
+  {method} norm
+  {method} normalize
+  {method} objects
+  {method} recommend
+  {method} recommendByProfile
+  {method} takeObjects
+  {method} takeValue
+  {method} transpose
+  {method} unitize
+  {method} weights
+}
+ML::StreamsBlendingRecommender::CompositeSBR --|> ML::StreamsBlendingRecommender::AbstractSBR
+ML::StreamsBlendingRecommender::CompositeSBR --|> ML::StreamsBlendingRecommender::UtilityFunctions
+
+
+class ML::StreamsBlendingRecommender::AbstractSBR  {
+  {field} $!value
+  {method} BUILDALL
+  {method} setValue
+  {method} takeValue
+}
+
+
+@enduml
