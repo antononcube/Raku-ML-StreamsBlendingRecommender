@@ -31,7 +31,9 @@
     "WLExampleData-dfLSATopicWordMatrix.csv",
     "WLExampleData-dfLSAWordGlobalWeights.csv",
     "WLExampleData-dfSMRMatrix.csv",
-    "WLExampleData-dfStemRules.csv"
+    "WLExampleData-dfStemRules.csv",
+    "class-diagram.puml",
+    "class-diagram.png"
   ],
   "license": "GPL-3.0-or-later",
   "tags": [
