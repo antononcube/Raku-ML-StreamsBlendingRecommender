@@ -231,6 +231,13 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Make from dataset
     ##========================================================
+    #| Make tag inverse indexes from wide form dataset.
+    #| * C<@data> A list of hashes.
+    #| * C<$tagTypes> Tag types to use -- columns of the dataset.
+    #| * C<$itemColumnName> Which column is the identifier column.
+    #| * C<$addTagTypesToColumnNames> Should the tag types be prefixes of the tags or not?
+    #| * C<$sep> Separator between the tag type prefixes and the tags.
+    #| * C<$object> Should the result be an object or not?
     method makeTagInverseIndexesFromWideForm( @data where is-array-of-hashes(@data),
                                               :$tagTypes = *,
                                               Str:D :$itemColumnName = @data[0].keys[0],
