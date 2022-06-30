@@ -73,35 +73,11 @@ use Data::Summarizers;
 my @dsTitanic = get-titanic-dataset();
 records-summary(@dsTitanic)
 ```
-```
-# +-----------------+----------------+---------------+-------------------+----------------+
-# | id              | passengerClass | passengerSex  | passengerSurvival | passengerAge   |
-# +-----------------+----------------+---------------+-------------------+----------------+
-# | 1146    => 1    | 3rd => 709     | male   => 843 | died     => 809   | 20      => 334 |
-# | 753     => 1    | 1st => 323     | female => 466 | survived => 500   | -1      => 263 |
-# | 775     => 1    | 2nd => 277     |               |                   | 30      => 258 |
-# | 800     => 1    |                |               |                   | 40      => 190 |
-# | 1263    => 1    |                |               |                   | 50      => 88  |
-# | 572     => 1    |                |               |                   | 60      => 57  |
-# | 15      => 1    |                |               |                   | 0       => 56  |
-# | (Other) => 1302 |                |               |                   | (Other) => 63  |
-# +-----------------+----------------+---------------+-------------------+----------------+
-```
 
 Here is a sample of the data:
 
 ```perl6
 to-pretty-table(@dsTitanic.roll(4));
-```
-```
-# +----------------+--------------+-----+-------------------+--------------+
-# | passengerClass | passengerAge |  id | passengerSurvival | passengerSex |
-# +----------------+--------------+-----+-------------------+--------------+
-# |      3rd       |      -1      | 988 |        died       |    female    |
-# |      2nd       |      30      | 380 |      survived     |    female    |
-# |      1st       |      40      | 207 |        died       |     male     |
-# |      3rd       |      20      | 670 |        died       |     male     |
-# +----------------+--------------+-----+-------------------+--------------+
 ```
 
 Here we make the recommender object:
@@ -113,17 +89,11 @@ my ML::StreamsBlendingRecommender::CoreSBR $sbrObj .= new;
 
 $sbrObj.makeTagInverseIndexesFromWideForm(@dsTitanic, tagTypes => @dsTitanic[0].keys.grep({ $_ ne 'id' }).Array, itemColumnName => <id>, :!addTagTypesToColumnNames).transposeTagInverseIndexes;
 ```
-```
-# ML::StreamsBlendingRecommender::CoreSBR.new(SMRMatrix => [])
-```
 
 Here we classify by profile
 
 ```perl6
 $sbrObj.classifyByProfile('passengerSurvival', ['1st', 'female']):!object
-```
-```
-# [survived => 1 died => 0.052632]
 ```
 
 **Remark:** Since we want to see the result and "dot-chain" with further method call we use
@@ -133,9 +103,6 @@ Here are the classification results of 5 randomly selected rows from the dataset
 
 ```perl6
 my @clRes = @dsTitanic.pick(5).map({ $sbrObj.classifyByProfile('passengerSurvival', $_<passengerAge passengerClass passengerSex>):!object }).Array;
-```
-```
-# [[died => 1 survived => 0.162791] [died => 1 survived => 0.098901] [died => 1 survived => 0.098901] [survived => 1 died => 0.15625] [survived => 1 died => 0.152709]]
 ```
 
 *TBF...*
