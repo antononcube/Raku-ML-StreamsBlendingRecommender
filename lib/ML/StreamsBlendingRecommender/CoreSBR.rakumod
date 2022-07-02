@@ -163,7 +163,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## The following line does what the commented out lines above do.
         my Hash %inverseIndexesPerTagType = @.SMRMatrix.classify({ $_<TagType Value> });
 
-        ## Re-make each array of hashes into a hash.
+        ## Re-make each array of hashes into an item-to-weight hash.
         %inverseIndexesPerTagType =
                 %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight> })) })) });
 
