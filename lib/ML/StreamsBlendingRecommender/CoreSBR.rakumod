@@ -301,6 +301,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## Transpose inverse indexes if needed
         if %!itemInverseIndexes.elems == 0 { self.transposeTagInverseIndexes() }
 
+        ## Except the line above the code of this method is same/dual to .recommendByProfile
+
         ## Make sure items are known
         my $itemsQuery = Mix($items{($items (&) $!knownItems).keys}:p);
 
