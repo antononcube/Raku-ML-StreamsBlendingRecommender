@@ -283,6 +283,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Profile
     ##========================================================
+    #| Find items profile.
+    #| * C<@items> A list or a mix of items.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
     multi method profile(@items, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
         self.profile(Mix(@items), :$normalize, :$object, :$warn)
     }
