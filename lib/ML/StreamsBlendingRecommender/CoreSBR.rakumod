@@ -539,7 +539,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         # Should
         my %shouldItems;
         if $should.elems > 0 || $must.elems > 0 {
-            %shouldItems = self.recommendByProfile([|$should, |$must], Inf, :$warn):!object;
+            %shouldItems = Mix(self.recommendByProfile([|$should, |$must], Inf, :$warn):!object);
         } else {
             %shouldItems = Mix(self.takeKnownItems);
         }
@@ -559,7 +559,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         # Must Not
         my %mustNotItems;
         if $mustNot.elems > 0 {
-            %mustNotItems = Mix(self.filterByProfile($must, type => $mustNotType, :$warn):!object);
+            %mustNotItems = Mix(self.filterByProfile($mustNot, type => $mustNotType, :$warn):!object);
         }
 
         if %mustNotItems.elems > 0 {
