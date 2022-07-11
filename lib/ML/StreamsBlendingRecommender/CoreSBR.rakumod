@@ -450,11 +450,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
                                  Bool :$warn = True) {
 
         my %profMix;
-        if $type eq 'intersection' {
+        if $type.lc eq 'intersection' {
 
             %profMix = [(&)] %!tagInverseIndexes{@prof};
 
-        } elsif $type eq 'union' {
+        } elsif $type.lc eq 'union' {
 
             %profMix = [(|)] %!tagInverseIndexes{@prof};
 
