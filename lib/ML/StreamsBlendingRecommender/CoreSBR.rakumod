@@ -138,7 +138,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my $res = self.ingestCSVFile($fileName, %(Item => $itemColumnName, TagType => $tagTypeColumnName,
                                                   Value => $valueColumnName, Weight => $weightColumnName),
                 :$naive-parsing, :$sep);
-        if not so $res { return Nil; }
+        if not so $res {
+            return $object ?? Nil !! False;
+        }
 
         @.SMRMatrix = |$res;
 
@@ -147,7 +149,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         self.makeTagInverseIndexes() when $make;
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
     #| A modified version of this function's code is used in C<LSATopicSBR::ingestLSAMatrixCSVFile>.
 
@@ -196,7 +198,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
 
     #| Synonym of makeTagInverseIndexes
@@ -230,7 +232,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## Assign known items.
         $!knownItems = Set(%!itemInverseIndexes.keys);
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
     #= I.e. make inverse indexes that correspond to the rows of the SMR matrix.
 
@@ -263,7 +265,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
             if $! {
                 note 'The argument tagTypes is expected to be a positional of strings or Whatever.';
-                return do if $object { Nil } else { False }
+                return $object ?? Nil !! False;
             }
         }
 
@@ -314,8 +316,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $itemsQuery.elems == 0 and $warn {
             warn 'None of the items is known in the recommender.';
-            $.value = %();
-            return do if $object { self } else { $.value }
+            self.setValue(%());
+            return $object ?? self !! self.takeValue();
         }
 
         if $itemsQuery.elems < $items.elems and $warn {
@@ -334,7 +336,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## Result
         self.setValue(@res);
 
-        if $object { self } else { @res }
+        return $object ?? self !! self.takeValue();
     }
 
     ##========================================================
@@ -399,7 +401,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         if $profQuery.elems == 0 and $warn {
             warn 'None of the profile tags is known in the recommender.';
             self.setValue(%());
-            return do if $object { self } else { self.takeValue() }
+            return $object ?? self !! self.takeValue();
         }
 
         if $profQuery.elems < $prof.elems and $warn {
@@ -411,7 +413,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         if $nrecs < 0 {
             warn 'The second argument is expected to be a positive integer or Inf';
             self.setValue(%());
-            return do if $object { self } else { self.takeValue() }
+            return $object ?? self !! self.takeValue();
         }
 
         ## Compute recommendations
@@ -426,7 +428,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## Result
         self.setValue(do if $nrecs < @res.elems { @res.head($nrecs).Array } else { @res });
 
-        if $object { self } else { self.takeValue() }
+        return $object ?? self !! self.takeValue();
     }
 
     ##========================================================
@@ -461,13 +463,13 @@ class ML::StreamsBlendingRecommender::CoreSBR
         } else {
             warn 'The value of the type argument is expected to be one of \'intersection\' or \'union\'.' if $warn;
             self.setValue(%());
-            return do if $object { self } else { self.takeValue() }
+            return $object ?? self !! self.takeValue();
         }
 
         ## Result
         self.setValue(%profMix.keys.Array);
 
-        if $object { self } else { self.takeValue() }
+        return $object ?? self !! self.takeValue();
     }
 
     ##========================================================
@@ -609,7 +611,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
 
     ##========================================================
@@ -655,7 +657,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
     #| Interpretation: each row of the SMR matrix is partitioned in tag type sub-vectors
     #| and those sub-vectors are normalized.
@@ -678,7 +680,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
 
     ##========================================================
@@ -697,7 +699,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
-        if $object { self } else { True }
+        return $object ?? self !! True;
     }
 
     ##========================================================
@@ -748,7 +750,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
             }
         }
 
-        if $object { self } else { %!globalWeights }
+        # Result
+        self.setValue(%!globalWeights);
+
+        return $object ?? self !! %!globalWeights;
     }
 
     ##========================================================
@@ -868,7 +873,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         %!tagTypeToTags{@tagTypes}:delete;
 
-        self
+        return self;
     }
 
     ##========================================================
