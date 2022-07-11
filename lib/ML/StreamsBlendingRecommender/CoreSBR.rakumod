@@ -538,8 +538,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         # Should
         my %shouldItems;
+        my $recs;
         if $should.elems > 0 || $must.elems > 0 {
-            %shouldItems = Mix(self.recommendByProfile([|$should, |$must], Inf, :$warn):!object);
+            $recs = self.recommendByProfile([|$should, |$must], Inf, :$warn):!object;
+            %shouldItems = Mix($recs);
         } else {
             %shouldItems = Mix(self.takeKnownItems);
         }
@@ -567,7 +569,14 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         # Result
-        self.setValue(%res.keys.List);
+        if $recs.elems > 0 {
+            # If profile recommendations were computed we want to use scores.
+            my %profRecs = |$recs;
+            self.setValue(%profRecs.grep({ $_.key ∈ %res }).sort({-$_.value}).Array);
+        } else {
+            self.setValue(%res.Array);
+        }
+
         return $object ?? self !! self.takeValue();
     }
 
