@@ -24,6 +24,8 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     #| * C<$wordColumnName> The words column name.
     #| * C<$weightColumnName> The weights column name.
     #| * C<$make> Should the inverse indexes be made or not?
+    #| * C<$naive-parsing> Should the CSV file be parsed with naive assumptions or not?
+    #| * C<$sep> Fields separator within a record.
     #| * C<$object> Should the result be an object or not?
     method ingestLSAMatrixCSVFile(Str $fileName,
                                   Str :$topicColumnName = 'Topic',
