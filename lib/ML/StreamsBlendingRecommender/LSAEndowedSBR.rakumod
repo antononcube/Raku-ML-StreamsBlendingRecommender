@@ -17,6 +17,12 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
     ##========================================================
     ## Recommend by profile delegation
     ##========================================================
+    #| Recommend by profile delegation. (To the C<$.Core> attribute.)
+    #| * C<@prof> A list or a mix of tags.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
     multi method recommendByProfile($prof,
                                     Int:D $nrecs = 12,
                                     Bool :$normalize = False,
@@ -34,22 +40,39 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
     ##========================================================
     ## Recommend by profile and text
     ##========================================================
+    #|  Recommend by profile and text.
+    #| * C<@prof> Profile tags.
+    #| * C<$text> Text query.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
+    #| * C<$profileNormalizer> Profile normalizer spec.
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
     multi method recommendByProfile(@prof,
                                     Str:D $text,
                                     Int:D $nrecs = 12,
                                     Bool :$normalize = False,
+                                    Str :$profileNormalizer = 'euclidean',
                                     Bool :$object = True,
                                     Bool :$warn = True) {
-        self.recommendByProfile(Mix(@prof), $text, $nrecs, :$normalize, :$object, :$warn)
+        self.recommendByProfile(Mix(@prof), $text, $nrecs, :$normalize, :$profileNormalizer, :$object, :$warn)
     }
 
+    #|  Recommend by profile and text.
+    #| * C<$prof> Scored tags profile.
+    #| * C<$text> Text query.
+    #| * C<$nrecs> Number of recommendations.
+    #| * C<$normalize> Should the recommendation scores be normalized or not?
+    #| * C<$profileNormalizer> Profile normalizer spec.
+    #| * C<$object> Should the result be an object or not?
+    #| * C<$warn> Should warnings be issued or not?
     multi method recommendByProfile(Mix $prof,
                                     Str:D $text,
                                     Int:D $nrecs = 12,
                                     Bool :$normalize = False,
+                                    Str :$profileNormalizer = 'euclidean',
                                     Bool :$object = True,
-                                    Bool :$warn = True,
-                                    Str :$profileNormalizer = 'eucliden' ) {
+                                    Bool :$warn = True) {
 
         ## Check
         if not self.Core.defined {
@@ -80,10 +103,11 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
             $textWordsProf = $textWordsProf.map({ 'Word:' ~ $_.key => $_.value }).Mix;
             $textTopicsProf = $textTopicsProf.map({ 'Topic:' ~ $_.key => $_.value }).Mix;
 
+            ## Normalize each profile
             $textWordsProf = self.normalize($textWordsProf, :$profileNormalizer);
             $textTopicsProf = self.normalize($textTopicsProf, :$profileNormalizer);
 
-            ## Make the word-topics profile.
+            ## Make the words-and-topics profile.
             %textProf = $textWordsProf (|) $textTopicsProf;
         }
 
@@ -91,7 +115,7 @@ class ML::StreamsBlendingRecommender::LSAEndowedSBR
         ## Note, the additional normalization arguments have to be surfaced to the signature.
         my $profCombined =
                 do with $prof.defined { self.normalize($prof, :$profileNormalizer) (|) %textProf }
-                else { %textProf }
+                else { self.normalize(%textProf, :$profileNormalizer) }
 
         ## Get recommendations
         self.Core.recommendByProfile( $profCombined, $nrecs, :$normalize, :$object, :$warn)
