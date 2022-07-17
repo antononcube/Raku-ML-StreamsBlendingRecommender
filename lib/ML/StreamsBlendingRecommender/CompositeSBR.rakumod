@@ -57,14 +57,21 @@ class ML::StreamsBlendingRecommender::CompositeSBR
     ##========================================================
     ## Recommend by profile
     ##========================================================
-    multi method recommendByProfile(@prof, Int:D $nrecs = 12, $normSpec = Nil, Bool :$normalize = False,
+    multi method recommendByProfile(@prof,
+                                    Int:D $nrecs = 12,
+                                    $normSpec is copy = Whatever,
+                                    Bool :$normalize = False,
                                     Bool :$object = True) {
         self.recommendByProfile(Mix(@prof), $nrecs, $normSpec, :$normalize, :$object)
     }
 
-    multi method recommendByProfile(Mix:D $prof, Int:D $nrecs = 12, $normSpec = Nil,
-                                    Bool :$normalize = False, Bool :$object = True) {
+    multi method recommendByProfile(Mix:D $prof,
+                                    Int:D $nrecs = 12,
+                                    $normSpec = Nil,
+                                    Bool :$normalize = False,
+                                    Bool :$object = True) {
 
+        ## Fill-in weights
         my %recommenderWeights = %.weights;
         if ( %recommenderWeights.elems > 0 ) {
             %recommenderWeights = Hash(%.objects.keys.map({ $_ => 1 })) , %recommenderWeights;
@@ -76,8 +83,8 @@ class ML::StreamsBlendingRecommender::CompositeSBR
         }
 
         ## Normalize each result by norm spec
-        if $normSpec {
-            %recs = %recs.pairs.map({ self.normalize($_, $normSpec) })
+        if $normSpec ~~ Str {
+            %recs = %recs.map({ $_.key => self.normalize($_.value, $normSpec) })
         }
 
         ## Merge the recommendations
