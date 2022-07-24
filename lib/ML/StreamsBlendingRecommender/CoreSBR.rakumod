@@ -658,6 +658,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         %!tagInverseIndexes = %res;
 
+        # This has to be refactored!
+        # Same type coercion is done in makeTagInverseIndexes.
+        %!tagInverseIndexes = %!tagInverseIndexes.map({ $_.key => $_.value.Mix });
+
         ## We make sure item inverse indexes are empty.
         %!itemInverseIndexes = %();
 
