@@ -171,8 +171,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         ## Re-make each array of hashes into an item-to-weight hash.
         %inverseIndexesPerTagType =
-                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value
-                        .map({ $_<Item> => $_<Weight> })) })) });
+                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight> })) })) });
 
         ## Make it a hash of hashes of mixes.
         %inverseIndexesPerTagType =
@@ -184,12 +183,15 @@ class ML::StreamsBlendingRecommender::CoreSBR
     multi method makeTagInverseIndexes(%inverseIndexesPerTagType, Bool :$object = True) {
 
         ## Derive the tag type to tags hash map.
-        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys.List })
-                .List);
+        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys.List }).List);
 
         ## Flatten the inverse index groups.
         %!tagInverseIndexes = %();
         for %inverseIndexesPerTagType.values -> %h { %!tagInverseIndexes.append(%h) };
+
+        # This has to be refactored!
+        # It is easier to it here as a post-process, during the .append-ing above.
+        %!tagInverseIndexes = %!tagInverseIndexes.map({ $_.key => $_.value.Mix });
 
         ## Assign known tags.
         ## say (%!tagInverseIndexes.keys).Set;
@@ -217,13 +219,15 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         ## Transpose tag inverse indexes into item inverse indexes.
 
-        my $items = %!tagInverseIndexes.values>>.keys.flat.unique;
-
-        %!itemInverseIndexes = Hash($items Z=> Mix());
+        #my $items = %!tagInverseIndexes.values>>.keys.flat.unique.Array;
 
         for %!tagInverseIndexes.kv -> $tag, $mix {
             for $mix.kv -> $item, $val {
-                %!itemInverseIndexes{$item}.push($tag => $val)
+                if %!itemInverseIndexes{$item}:!exists {
+                    %!itemInverseIndexes{$item} = MixHash($tag => $val)
+                } else {
+                    %!itemInverseIndexes{$item} (+)= Mix($tag => $val)
+                }
             }
         }
 
