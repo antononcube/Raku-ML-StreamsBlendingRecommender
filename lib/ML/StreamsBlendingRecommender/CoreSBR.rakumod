@@ -762,7 +762,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
             }
 
             when $_ (elem) <Binary None> {
-                %!globalWeights = Hash(%!tagInverseIndexes.keys Z=> 1.roll(%!tagInverseIndexes.elems))
+                %!globalWeights = Hash(%!tagInverseIndexes.keys X=> 1)
             }
 
             when $_ (elem) <ColumnStochastic Sum> {
