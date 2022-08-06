@@ -203,9 +203,29 @@ class ML::StreamsBlendingRecommender::CoreSBR
         return $object ?? self !! True;
     }
 
-    #| Synonym of makeTagInverseIndexes
-    method makeTagInverseIndexesFromLongForm(*@args) {
-        self.makeTagInverseIndexes(!@args)
+    ##========================================================
+    ## Make from long form dataset
+    ##========================================================
+    #| Make inverse indexes using long form data
+    #| * C<@data> A list of hashes.
+    #| * C<$itemColumnName> Which column is the item column.
+    #| * C<$tagTypeColumnName> Which column is the tag type column.
+    #| * C<$valueColumnName> Which column is the (tag) value column.
+    #| * C<$weightColumnName> Which column is the weight column.
+    #| * C<$object> Should the result be an object or not?
+    method makeTagInverseIndexesFromLongForm(@data where is-array-of-hashes(@data),
+                                             Str :$itemColumnName = 'Item',
+                                             Str :$tagTypeColumnName = 'TagType',
+                                             Str :$valueColumnName = 'Value',
+                                             Str :$weightColumnName = 'Weight',
+                                             Bool :$object = True) {
+
+        @.SMRMatrix = @data.map({ %( Item => $_{$itemColumnName},
+                                     TagType => $_{$tagTypeColumnName},
+                                     Value => $_{$valueColumnName},
+                                     Weight => $_{$weightColumnName} ) });
+
+        return self.makeTagInverseIndexes(:$object);
     }
 
     ##========================================================
@@ -352,17 +372,17 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$normalize> Should the recommendation scores be normalized or not?
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
-    multi method recommend(@items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
+    multi method recommend(@items, Numeric:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
                            Bool :$warn = True) {
         self.recommend(Mix(@items), $nrecs, :$normalize, :$object, :$warn)
     }
 
-    multi method recommend($item, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
+    multi method recommend($item, Numeric:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
                            Bool :$warn = True) {
         self.recommend(Mix([$item]), $nrecs, :$normalize, :$object, :$warn)
     }
 
-    multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
+    multi method recommend(Mix:D $items, Numeric:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
                            Bool :$warn = True) {
         ## It is not fast, but it is just easy to compute the profile and call recommendByProfile.
         self.recommendByProfile(Mix(self.profile($items):!object), $nrecs, :$normalize, :$object, :$warn)
