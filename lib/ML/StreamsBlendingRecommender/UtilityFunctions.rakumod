@@ -144,6 +144,11 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     ##========================================================
     ## Join across
     ##========================================================
+    #| Join recommendations across with a hash or dataset.
+    #| C<$recs> -- Recommendations.
+    #| C<@dataset> -- Dataset to join with.
+    #| C<$by> -- Column name to join by.
+    #| C<$object> -- Should an object be returned or not?
     multi method joinAcross( $recs, @dataset, :$by is copy = Whatever, Bool :$object = True ) {
 
         if not is-array-of-hashes(@dataset) {
@@ -171,6 +176,10 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
         if $object { self } else { self.takeValue() }
     }
 
+    #| Join pipeline value across with a hash or dataset.
+    #| C<@dataset> -- Dataset to join with.
+    #| C<$by> -- Column name to join by.
+    #| C<$object> -- Should an object be returned or not?
     multi method joinAcross( @dataset, :$by is copy = Whatever, Bool :$object = True ) {
 
         my $recs = self.takeValue.Array;
