@@ -171,7 +171,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         ## Re-make each array of hashes into an item-to-weight hash.
         %inverseIndexesPerTagType =
-                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight> })) })) });
+                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight>.subst(/'.' $/, '.0') })) })) });
 
         ## Make it a hash of hashes of mixes.
         %inverseIndexesPerTagType =
