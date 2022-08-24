@@ -12,11 +12,11 @@ plan 7;
 
 my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfSMRMatrix.csv';
 
-my $sbrIDF = ML::StreamsBlendingRecommender::CoreSBR.new;
+my $sbrCore = ML::StreamsBlendingRecommender::CoreSBR.new;
 
 ok $fileName.chars > 0, '$fileNameIDF';
 
-ok $sbrIDF.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+ok $sbrCore.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
         'ingest SMR matrix from CSV file';
 
 
@@ -24,7 +24,7 @@ ok $sbrIDF.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
 ## Recommendations by profile
 ##-----------------------------------------------------------
 my @prof = <ApplicationArea:Aviation DataType:TimeSeries>;
-my %recsIDF = $sbrIDF.recommendByProfile(@prof, 10, :normalize, :!object);
+my %recsIDF = $sbrCore.recommendByProfile(@prof, 10, :normalize, :!object);
 
 ok %recsIDF.elems == 10, 'recsIDF.elems';
 
