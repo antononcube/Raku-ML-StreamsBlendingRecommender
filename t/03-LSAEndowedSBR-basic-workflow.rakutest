@@ -1,0 +1,82 @@
+use v6.d;
+
+use lib './lib';
+use lib '.';
+
+use ML::StreamsBlendingRecommender::CoreSBR;
+use ML::StreamsBlendingRecommender::LSATopicSBR;
+use ML::StreamsBlendingRecommender::LSAEndowedSBR;
+
+use Test;
+
+plan 10;
+
+##===========================================================
+## CoreSBR
+##===========================================================
+
+my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfSMRMatrix.csv';
+
+my $sbrCore = ML::StreamsBlendingRecommender::CoreSBR.new;
+
+ok $fileName.chars > 0, '$fileNameIDF';
+
+ok $sbrCore.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+        'ingest SMR matrix from CSV file';
+
+##===========================================================
+## LSATopicSBR
+##===========================================================
+
+##-----------------------------------------------------------
+## Topic matrix
+$fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfLSATopicWordMatrix.csv';
+
+my $sbrLSA = ML::StreamsBlendingRecommender::LSATopicSBR.new;
+
+ok $fileName.chars > 0, '$fileNameIDF';
+
+ok $sbrLSA.ingestLSAMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+        'ingest LSA matrix from CSV file';
+
+##-----------------------------------------------------------
+## Global weights
+$fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfLSAWordGlobalWeights.csv';
+
+is $sbrLSA.ingestGlobalWeightsCSVFile($fileName, :!object), True,
+        'ingest global weights from CSV file';
+
+is $sbrLSA.takeGlobalWeights.elems > 1000, True,
+        'numbef of global weights';
+
+##-----------------------------------------------------------
+## Stem rules
+$fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfStemRules.csv';
+
+is $sbrLSA.ingestStemRulesCSVFile($fileName, :!object), True,
+        'ingest stem rules from CSV file';
+
+is $sbrLSA.takeStemRules.elems > 1000, True,
+        'numbef of global weights';
+
+##===========================================================
+## LSAEndowedSBR
+##===========================================================
+
+my $sbrWLExampleData = ML::StreamsBlendingRecommender::LSAEndowedSBR.new(Core=>$sbrCore, LSA => $sbrLSA);
+
+##===========================================================
+## Recommend by text
+##===========================================================
+
+my $prof = <ApplicationArea:Aviation DataType:TimeSeries>;
+my $query = "titanic survival data records";
+
+my @qbag = |$sbrWLExampleData.recommendByProfile($prof, $query, 10, :!object);
+
+is @qbag.elems >= 3, True, 'recommend by profile and text';
+
+is @qbag[0].key ∈ <Statistics-InternationalAirlinePassengers Statistics-AirlinePassengerMiles>, True;
+
+
+done-testing;
