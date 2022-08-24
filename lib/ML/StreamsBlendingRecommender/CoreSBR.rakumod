@@ -643,7 +643,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     #| Normalize the inverse indexes per tag type per item.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
-    #| * C<$object> Should the result be an object or not?
+    #| * C<:$object> Should the result be an object or not?
     method normalizePerTagTypePerItem($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Instead of working with combined keys (tagType item)
@@ -796,16 +796,17 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| C<:$drop-zero-scored-labels> -- Should the labels with zero scores be dropped or not?
     #| C<:$normalize> -- Should the scores be normalized?
     #| C<:$ignore-unknown> -- Should the unknown tags be ignored or not?
+    #| C<$object> -- Should the result be an object or not?
     multi method classifyByProfile(Str $tagType, @profile, *%args) {
-        return self.classifyByProfile($tagType, %( @profile X=> 1.0).Mix, |%args);
+        return self.classifyByProfile($tagType, %(@profile X=> 1.0).Mix, |%args);
     }
 
     multi method classifyByProfile(Str $tagType,
                                    Mix:D $profile,
                                    UInt :$n-top-nearest-neighbors = 100,
                                    Bool :$voting = False,
-                                   Bool :$drop_zero_scored_labels = True,
-                                   :$max_number_of_labels = Whatever,
+                                   Bool :$drop-zero-scored-labels = True,
+                                   :$max-number-of-labels = Whatever,
                                    Bool :$normalize = True,
                                    Bool :$ignore-unknown = False,
                                    Bool :$object = True) {
@@ -842,7 +843,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         %clRecs = %clRecs.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }).cache;
 
         # Drop zero scored labels
-        if $drop_zero_scored_labels {
+        if $drop-zero-scored-labels {
             %clRecs = %clRecs.grep({ $_.value > 0 }).cache;
         }
 
@@ -855,8 +856,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @clRecs = %clRecs.pairs.sort(-*.value);
 
         # Pick max-top labels
-        if $max_number_of_labels ~~ Numeric and $max_number_of_labels > 0 and $max_number_of_labels < @clRecs.elems {
-            @clRecs = @clRecs.head($max_number_of_labels).Array;
+        if $max-number-of-labels ~~ Numeric and $max-number-of-labels > 0 and $max-number-of-labels < @clRecs.elems {
+            @clRecs = @clRecs.head($max-number-of-labels).Array;
         }
 
         # Result
