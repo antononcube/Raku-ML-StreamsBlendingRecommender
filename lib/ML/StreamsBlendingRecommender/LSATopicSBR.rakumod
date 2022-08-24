@@ -12,8 +12,16 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
     ##========================================================
     ## Data members
     ##========================================================
-    has %.GlobalWeights is rw;
-    has %.StemRules is rw;
+    has %!stemRules;
+
+    method setStemRules(%arg) {
+        %!stemRules = %arg;
+        self
+    }
+
+    method takeStemRules() {
+        %!stemRules
+    }
 
     ##========================================================
     ## Ingest a LSA matrix CSV file
@@ -73,7 +81,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
             return Nil
         }
 
-        %!GlobalWeights = @globalWeights.map({ $_{$wordColumnName} => $_{$weightColumnName} });
+        self.setGlobalWeights(@globalWeights.map({ $_{$wordColumnName} => +$_{$weightColumnName} }).Hash);
 
         if $object { self } else { True }
     }
@@ -101,7 +109,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
             return Nil
         }
 
-        %!StemRules = @stemRules.map({ $_{$wordColumnName} => $_{$stemColumnName} });
+        %!stemRules = @stemRules.map({ $_{$wordColumnName} => $_{$stemColumnName} });
 
         if $object { self } else { True }
     }
@@ -119,16 +127,16 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         my %bag = Bag( $text.split($splitPattern).map({ $_.lc}) );
 
         ## Stem the words
-        if %!StemRules.elems > 0 {
+        if %!stemRules.elems > 0 {
             %bag = do for %bag.kv -> $word, $count {
-                if %!StemRules{$word}:exists { %!StemRules{$word} => $count } else { $word => $count }
+                if %!stemRules{$word}:exists { %!stemRules{$word} => $count } else { $word => $count }
             }
         }
 
         ## Apply global weights
-        if %!GlobalWeights.elems > 0 {
+        if self.takeGlobalWeights.elems > 0 {
             %bag = do for %bag.kv -> $word, $count {
-                if %!GlobalWeights{$word}:exists { $word => $count * %!GlobalWeights{$word} }
+                if self.takeGlobalWeights{$word}:exists { $word => $count * self.takeGlobalWeights{$word} }
             }
         }
 
@@ -136,7 +144,8 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         %bag = self.normalize( %bag, 'euclidean');
 
         ## Result
-        if $object { self.value = %bag; self } else { %bag }
+        self.setValue(%bag);
+        if $object { self } else { %bag }
     }
 
     ##========================================================
@@ -165,7 +174,8 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         }
 
         ## Result
-        if $object { self.setValue(%res); self } else { %res }
+        self.setValue(%bag);
+        if $object { self } else { %res }
     }
     #| Uses C<LSATopicSBR::representByTerms>.
 
