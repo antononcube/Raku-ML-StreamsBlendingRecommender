@@ -787,6 +787,15 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Classify
     ##========================================================
+    #| Classify by profile vector.
+    #| C<$tagType> -- Tag type to classify to.
+    #| C<$profile> -- A tag, a list of tags, a dictionary of scored tags.
+    #| C<:$n-top-nearest-neighbors> -- Number of top nearest neighbors to use.
+    #| C<:$voting> -- Should simple voting be used or a weighted sum?
+    #| C<:$max-number-of-labels> -- The maximum number of labels to be returned; if None all found labels are returned.
+    #| C<:$drop-zero-scored-labels> -- Should the labels with zero scores be dropped or not?
+    #| C<:$normalize> -- Should the scores be normalized?
+    #| C<:$ignore-unknown> -- Should the unknown tags be ignored or not?
     multi method classifyByProfile(Str $tagType, @profile, *%args) {
         return self.classifyByProfile($tagType, %( @profile X=> 1.0).Mix, |%args);
     }
