@@ -142,7 +142,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
             return $object ?? Nil !! False;
         }
 
-        @.SMRMatrix = |$res;
+        self.setSMRMatrix($res);
 
         %!itemInverseIndexes = %();
         %!tagInverseIndexes = %();
@@ -167,7 +167,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         #my %inverseIndexesPerTagType = %inverseIndexGroups.pairs.map({ $_.key => $_.value.classify({ $_<Value> }) });
 
         ## The following line does what the commented out lines above do.
-        my Hash %inverseIndexesPerTagType = @.SMRMatrix.classify({ $_<TagType Value> });
+        my Hash %inverseIndexesPerTagType = self.takeSMRMatrix.classify({ $_<TagType Value> });
 
         ## Re-make each array of hashes into an item-to-weight hash.
         %inverseIndexesPerTagType =
@@ -220,10 +220,10 @@ class ML::StreamsBlendingRecommender::CoreSBR
                                              Str :$weightColumnName = 'Weight',
                                              Bool :$object = True) {
 
-        @.SMRMatrix = @data.map({ %( Item => $_{$itemColumnName},
-                                     TagType => $_{$tagTypeColumnName},
-                                     Value => $_{$valueColumnName},
-                                     Weight => $_{$weightColumnName} ) });
+        self.setSMRMatrix( @data.map({ %( Item => $_{$itemColumnName},
+                                          TagType => $_{$tagTypeColumnName},
+                                          Value => $_{$valueColumnName},
+                                          Weight => $_{$weightColumnName} ) }));
 
         return self.makeTagInverseIndexes(:$object);
     }
