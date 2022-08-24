@@ -1,0 +1,75 @@
+use v6;
+use lib './lib';
+use lib '.';
+use ML::StreamsBlendingRecommender::LSATopicSBR;
+use Test;
+
+plan 9;
+
+##-----------------------------------------------------------
+## Creation and ingestion
+##-----------------------------------------------------------
+
+##-----------------------------------------------------------
+## Topic matrix
+my Str $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfLSATopicWordMatrix.csv';
+
+my $sbrWLExampleDataTopics = ML::StreamsBlendingRecommender::LSATopicSBR.new;
+
+ok $fileName.chars > 0, '$fileNameIDF';
+
+ok $sbrWLExampleDataTopics.ingestLSAMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+        'ingest LSA matrix from CSV file';
+
+##-----------------------------------------------------------
+## Global weights
+$fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfLSAWordGlobalWeights.csv';
+
+is $sbrWLExampleDataTopics.ingestGlobalWeightsCSVFile($fileName, :!object), True,
+        'ingest global weights from CSV file';
+
+is $sbrWLExampleDataTopics.takeGlobalWeights.elems > 1000, True,
+        'numbef of global weights';
+
+##-----------------------------------------------------------
+## Stem rules
+$fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfStemRules.csv';
+
+is $sbrWLExampleDataTopics.ingestStemRulesCSVFile($fileName, :!object), True,
+        'ingest stem rules from CSV file';
+
+is $sbrWLExampleDataTopics.takeStemRules.elems > 1000, True,
+        'numbef of global weights';
+
+
+##-----------------------------------------------------------
+## Represent by terms
+##-----------------------------------------------------------
+my $query = "airline time series";
+
+my @qbag = |$sbrWLExampleDataTopics.representByTerms($query, :!object);
+
+is @qbag.elems >= 3, True, 'represent by terms';
+
+
+##-----------------------------------------------------------
+## Represent by topics
+##-----------------------------------------------------------
+my $query2 = "airline time series";
+
+my @qbag2 = |$sbrWLExampleDataTopics.representByTopics($query2, :!object);
+
+is @qbag2.elems >= 3, True, 'represent by topics';
+
+
+##-----------------------------------------------------------
+## Recommend by text
+##-----------------------------------------------------------
+my $query3 = "titanic survival data records";
+
+my @qbag3 = |$sbrWLExampleDataTopics.recommendByText($query3, :!object);
+
+is @qbag3.elems >= 3, True, 'recommend by text';
+
+
+done-testing;
