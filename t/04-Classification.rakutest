@@ -8,7 +8,7 @@ use Data::Reshapers;
 
 use Test;
 
-plan 5;
+plan 6;
 
 ##-----------------------------------------------------------
 ## Creation and ingestion
@@ -18,6 +18,7 @@ my @dsTitanic = Data::Reshapers::get-titanic-dataset(headers => 'auto');
 
 my ML::StreamsBlendingRecommender::CoreSBR $sbrObj .= new;
 
+## 1
 ok $sbrObj.makeTagInverseIndexesFromWideForm(
         @dsTitanic,
         tagTypes => @dsTitanic[0].keys.grep({ $_ ne 'id' }).Array,
@@ -25,9 +26,11 @@ ok $sbrObj.makeTagInverseIndexesFromWideForm(
         :!addTagTypesToColumnNames).transposeTagInverseIndexes,
         'Ingest SMR matrix from CSV file';
 
+## 2
 is $sbrObj.takeTagInverseIndexes.elems == 17, True,
         'Expected number of tags';
 
+## 3
 is $sbrObj.takeItemInverseIndexes.elems ≥ 1309, True,
         'Expected number of items';
 
@@ -36,9 +39,11 @@ is $sbrObj.takeItemInverseIndexes.elems ≥ 1309, True,
 ##-----------------------------------------------------------
 my @prof = <male 3rd>;
 
+## 4
 ok $sbrObj.recommendByProfile(@prof, 10, :normalize, :!object),
         'Recommend by profile';
 
+## 5
 my %recs = $sbrObj.recommendByProfile(@prof, 10, :normalize, :!object);
 ok %recs.elems == 10, 'recs.elems';
 
@@ -47,8 +52,6 @@ ok %recs.elems == 10, 'recs.elems';
 ## Classify by profile
 ##-----------------------------------------------------------
 
-my %recs2 = $sbrObj.classifyByProfile('passengerSurvival', @prof, n-top-nearest-neighbors => 50, :!normalize, :!object);
-
 # I would like to have a check like this:
 #
 #       is-deeply %recs2, %(died => 38, survived => 12), 'recsIDF.elems';
@@ -56,6 +59,8 @@ my %recs2 = $sbrObj.classifyByProfile('passengerSurvival', @prof, n-top-nearest-
 # but the current normalization methods do not include normalizePerItem.
 # Also,
 
+## 6
+my %recs2 = $sbrObj.classifyByProfile('passengerSurvival', @prof, n-top-nearest-neighbors => 50, :!normalize, :!object);
 is %recs2<died> ≥ 2 * %recs2<survived>, True, 'Expected classification distribution';
 
 done-testing;
