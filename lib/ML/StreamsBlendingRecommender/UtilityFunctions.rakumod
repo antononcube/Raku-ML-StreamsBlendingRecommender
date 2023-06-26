@@ -1,6 +1,6 @@
 use Text::CSV;
 use Data::Reshapers;
-use Data::Reshapers::Predicates;
+use Data::TypeSystem::Predicates;
 
 role ML::StreamsBlendingRecommender::UtilityFunctions {
 

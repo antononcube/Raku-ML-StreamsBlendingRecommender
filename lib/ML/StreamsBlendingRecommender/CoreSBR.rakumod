@@ -2,7 +2,7 @@ use v6;
 
 use Text::CSV;
 use Data::Reshapers;
-use Data::Reshapers::Predicates;
+use Data::TypeSystem::Predicates;
 use ML::StreamsBlendingRecommender::AbstractSBR;
 use ML::StreamsBlendingRecommender::UtilityFunctions;
 
