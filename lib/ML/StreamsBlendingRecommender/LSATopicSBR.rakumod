@@ -73,17 +73,17 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
                                           Bool :$object = True) {
 
         my $csv = Text::CSV.new;
-        my @globalWeights = $csv.csv(in => $fileName, headers => 'auto');
+        my @global-weights = $csv.csv(in => $fileName, headers => 'auto');
 
         my @expectedColumnNames = ($wordColumnName, $weightColumnName);
 
-        if (@globalWeights[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
+        if (@global-weights[0].keys (&) @expectedColumnNames).elems < @expectedColumnNames.elems {
             warn 'The ingested global weights CSV file does not have the expected column names:', @expectedColumnNames
                     .join(', '), '.';
             return Nil
         }
 
-        self.setGlobalWeights(@globalWeights.map({ $_{$wordColumnName} => +$_{$weightColumnName} }).Hash);
+        self.setGlobalWeights(@global-weights.map({ $_{$wordColumnName} => +$_{$weightColumnName} }).Hash);
 
         if $object { self } else { True }
     }

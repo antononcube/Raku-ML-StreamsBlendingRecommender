@@ -532,7 +532,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
                                             Str :$mustNotType = 'union',
                                             Bool :$object = True,
                                             Bool :$warn = True) {
-        return self.retrieve-by-query-elements($should.keys, $must, $mustNot, :$mustType, :$mustNotType, :$object, :$warn);
+        return self.retrieve-by-query-elements($should.keys, $must, $mustNot, :$mustType, :$mustNotType, :$object,
+                :$warn);
     }
 
     multi method retrieve-by-query-elements(:$should = (),
@@ -614,7 +615,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Normalize the inverse indexes per tag type.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
     #| * C<$object> Should the result be an object or not?
-    method normalizePerTagType($normSpec = 'euclidean', Bool :$object = True) {
+    method normalize-per-tag-type($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Find norms per tag type.
         my %norms =
@@ -646,7 +647,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Normalize the inverse indexes per tag type per item.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
     #| * C<:$object> Should the result be an object or not?
-    method normalizePerTagTypePerItem($normSpec = 'euclidean', Bool :$object = True) {
+    method normalize-per-tag-type-per-item($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Instead of working with combined keys (tagType item)
         ## we loop over the tag types.
@@ -698,7 +699,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Normalize the inverse indexes per tag.
     #| * C<$normSpec> Norm specification. See <UtilityFunctions::norm>.
     #| * C<$object> Should the result be an object or not?
-    method normalizePerTag($normSpec = 'euclidean', Bool :$object = True) {
+    method normalize-per-tag($normSpec = 'euclidean', Bool :$object = True) {
 
         ## Normalize.
         %!tagInverseIndexes =
@@ -738,7 +739,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| Compute global weights for the keys of the inverse indexes.
     #| * C<$spec> Global weight function spec; one of C<<IDF GFIDF Binary None Normal ColumnStochastic Sum>>.
     #| * C<$object> Should the result be an object or not?
-    method globalWeights($spec = 'IDF', Bool :$object = True) {
+    method global-weights($spec = 'IDF', Bool :$object = True) {
 
         my %colSums = Hash(%!tagInverseIndexes.keys Z=> %!tagInverseIndexes.values>>.total);
         %colSums = %colSums.deepmap({ $_ > 0 ?? $_ !! $_ });
@@ -799,19 +800,19 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| C<:$normalize> -- Should the scores be normalized?
     #| C<:$ignore-unknown> -- Should the unknown tags be ignored or not?
     #| C<$object> -- Should the result be an object or not?
-    multi method classifyByProfile(Str $tagType, @profile, *%args) {
-        return self.classifyByProfile($tagType, %(@profile X=> 1.0).Mix, |%args);
+    multi method classify-by-profile(Str $tagType, @profile, *%args) {
+        return self.classify-by-profile($tagType, %(@profile X=> 1.0).Mix, |%args);
     }
 
-    multi method classifyByProfile(Str $tagType,
-                                   Mix:D $profile,
-                                   UInt :$n-top-nearest-neighbors = 100,
-                                   Bool :$voting = False,
-                                   Bool :$drop-zero-scored-labels = True,
-                                   :$max-number-of-labels = Whatever,
-                                   Bool :$normalize = True,
-                                   Bool :$ignore-unknown = False,
-                                   Bool :$object = True) {
+    multi method classify-by-profile(Str $tagType,
+                                     Mix:D $profile,
+                                     UInt :$n-top-nearest-neighbors = 100,
+                                     Bool :$voting = False,
+                                     Bool :$drop-zero-scored-labels = True,
+                                     :$max-number-of-labels = Whatever,
+                                     Bool :$normalize = True,
+                                     Bool :$ignore-unknown = False,
+                                     Bool :$object = True) {
 
         # Verify tag_type
         if $tagType ∉ %!tagTypeToTags.keys {
@@ -871,11 +872,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Prove by metadata
     ##========================================================
-    multi method proveByMetadata(@profile, @items) {
-        return self.proveByMetadata(%( @profile X=> 1.0), @items);
+    multi method prove-by-metadata(@profile, @items) {
+        return self.prove-by-metadata(%( @profile X=> 1.0), @items);
     }
 
-    multi method proveByMetadata(%profile, @items) {
+    multi method prove-by-metadata(%profile, @items) {
         note "Proving by metadata is not implemented yet.";
         return self;
     }
@@ -883,11 +884,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Prove by history
     ##========================================================
-    multi method proveByHistory(@history, @items) {
-        return self.proveByHistory(%( @history X=> 1.0), @items);
+    multi method prove-by-history(@history, @items) {
+        return self.prove-by-history(%( @history X=> 1.0), @items);
     }
 
-    multi method proveByHistory(%history, @items) {
+    multi method prove-by-history(%history, @items) {
         note "Proving by history is not implemented yet.";
         return self;
     }
@@ -897,7 +898,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     #| Remove tag types.
     #| * C<@tagTypes> A list of tag types to be removed
-    method removeTagTypes(@tagTypes) {
+    method remove-tag-types(@tagTypes) {
 
         my %tagTypesToRemoveToTags = %!tagTypeToTags{@tagTypes}:p;
 
@@ -919,11 +920,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Filter matrix
     ##========================================================
-    multi method filterMatrix(%profile) {
-        return self.filterMatrix(%profile.values);
+    multi method filter-matrix(%profile) {
+        return self.filter-matrix(%profile.values);
     }
 
-    multi method filterMatrix(@profile) {
+    multi method filter-matrix(@profile) {
         note "Filter matrix is not implemented yet.";
         return self;
     }
@@ -940,7 +941,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Recommenders algebra -- Annex matrix
     ##========================================================
-    method annexSubMatrix(%matrixInverseIndexes, Str $newTagType) {
+    method annex-sub-matrix(%matrixInverseIndexes, Str $newTagType) {
         note "Annexing of a sub-matrix is not implemented yet.";
         return self;
     }
@@ -948,7 +949,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Recommenders algebra -- To tag type recommender
     ##========================================================
-    method makeTagTypeRecommender(Str $tagTypeTo, @tagTypes) {
+    method make-tag-type-recommender(Str $tagTypeTo, @tagTypes) {
         note "Tag type recommender making is not implemented yet.";
         return self;
     }
