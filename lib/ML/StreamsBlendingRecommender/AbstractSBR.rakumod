@@ -2,12 +2,12 @@ class ML::StreamsBlendingRecommender::AbstractSBR {
 
     has $!value;
 
-    method setValue($arg) {
+    method set-value($arg) {
         $!value = $arg;
         self
     }
 
-    method takeValue() {
+    method take-value() {
         $!value
     }
 }

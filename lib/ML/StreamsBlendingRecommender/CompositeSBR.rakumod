@@ -17,11 +17,11 @@ class ML::StreamsBlendingRecommender::CompositeSBR
     ##========================================================
     ## Takers
     ##========================================================
-    method takeObjects() {
+    method take-objects() {
         %.objects
     }
 
-    method takeValue() {
+    method take-value() {
         %!value
     }
 
@@ -50,36 +50,36 @@ class ML::StreamsBlendingRecommender::CompositeSBR
     }
 
     multi method recommend(Mix:D $items, Int:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True) {
-        ## It is not fast, but it is just easy to compute the profile and call recommendByProfile.
-        self.recommendByProfile(Mix(self.profile($items).takeValue), $nrecs, :$normalize, :$object)
+        ## It is not fast, but it is just easy to compute the profile and call recommend-by-profile.
+        self.recommend-by-profile(Mix(self.profile($items).take-value), $nrecs, :$normalize, :$object)
     }
 
     ##========================================================
     ## Recommend by profile
     ##========================================================
-    multi method recommendByProfile(@prof,
-                                    Int:D $nrecs = 12,
-                                    $normSpec is copy = Whatever,
-                                    Bool :$normalize = False,
-                                    Bool :$object = True) {
-        self.recommendByProfile(Mix(@prof), $nrecs, $normSpec, :$normalize, :$object)
+    multi method recommend-by-profile(@prof,
+                                      Int:D $nrecs = 12,
+                                      $normSpec is copy = Whatever,
+                                      Bool :$normalize = False,
+                                      Bool :$object = True) {
+        self.recommend-by-profile(Mix(@prof), $nrecs, $normSpec, :$normalize, :$object)
     }
 
-    multi method recommendByProfile(Mix:D $prof,
-                                    Int:D $nrecs = 12,
-                                    $normSpec = Nil,
-                                    Bool :$normalize = False,
-                                    Bool :$object = True) {
+    multi method recommend-by-profile(Mix:D $prof,
+                                      Int:D $nrecs = 12,
+                                      $normSpec = Nil,
+                                      Bool :$normalize = False,
+                                      Bool :$object = True) {
 
         ## Fill-in weights
         my %recommenderWeights = %.weights;
-        if ( %recommenderWeights.elems > 0 ) {
-            %recommenderWeights = Hash(%.objects.keys.map({ $_ => 1 })) , %recommenderWeights;
+        if (%recommenderWeights.elems > 0) {
+            %recommenderWeights = Hash(%.objects.keys.map({ $_ => 1 })), %recommenderWeights;
         }
 
         ## Get recommendations from each object
         my %recs = do for %.objects.kv -> $name, $obj {
-            $name => Mix($obj.recommendByProfile($prof, $nrecs, :!normalize, :!object, :!warn))
+            $name => Mix($obj.recommend-by-profile($prof, $nrecs, :!normalize, :!object, :!warn))
         }
 
         ## Normalize each result by norm spec

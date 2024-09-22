@@ -56,9 +56,9 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
         ## Unitize.
         if %index.all ~~ Associative {
             %index =
-                do for %index.kv -> $k, $v {
-                    $k => Mix($v.keys)
-                }
+                    do for %index.kv -> $k, $v {
+                        $k => Mix($v.keys)
+                    }
         } else {
             %index = Mix(%index.keys).Hash
         }
@@ -77,7 +77,7 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
         ## for transposing tag inverse indexes into item inverse indexes.
         ## But, of course, it applies to any hash-of-mixes.
 
-        if !( %inverseIndexes.values.all ~~ Mix) {
+        if !(%inverseIndexes.values.all ~~ Mix) {
             die "The first argument is expected to be a Hash of Mix-objects.";
         }
 
@@ -104,13 +104,13 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     #| * C<$mapper> Maps internal to actual column names.
     #| * C<$naive-parsing> Should naive parsing be used or not?
     #| * C<$sep> Separator of CSV fields.
-    method ingestCSVFile(Str $fileName,
-                         %mapper = %(Item => 'Item',
-                                     TagType => 'TagType',
-                                     Value => 'Value',
-                                     Weight => 'Weight'),
-                         Bool :$naive-parsing = False,
-                         Str :$sep = ','
+    method ingest-csv-file(Str $fileName,
+                           %mapper = %(Item => 'Item',
+                                       TagType => 'TagType',
+                                       Value => 'Value',
+                                       Weight => 'Weight'),
+                           Bool :$naive-parsing = False,
+                           Str :$sep = ','
             --> Array) {
 
         my @res;
@@ -149,7 +149,7 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
     #| C<@dataset> -- Dataset to join with.
     #| C<$by> -- Column name to join by.
     #| C<$object> -- Should an object be returned or not?
-    multi method joinAcross( $recs, @dataset, :$by is copy = Whatever, Bool :$object = True ) {
+    multi method join-across($recs, @dataset, :$by is copy = Whatever, Bool :$object = True) {
 
         if not is-array-of-hashes(@dataset) {
             warn 'The first argument is expected to be an array of hashes.';
@@ -167,25 +167,26 @@ role ML::StreamsBlendingRecommender::UtilityFunctions {
         }
 
         if is-array-of-pairs($recs) {
-            self.setValue( join-across($recs.map({ %( $by => $_.key, Score => $_.value ) }), @dataset, $by).sort(-*<Score>) );
+            self.set-value(join-across($recs.map({ %( $by => $_.key, Score => $_.value) }), @dataset, $by)
+                    .sort(-*<Score>));
         } else {
             warn "The first argument is not an array of pairs.";
             return $object ?? self !! Nil;
         }
 
-        if $object { self } else { self.takeValue() }
+        if $object { self } else { self.take-value() }
     }
 
     #| Join pipeline value across with a hash or dataset.
     #| C<@dataset> -- Dataset to join with.
     #| C<$by> -- Column name to join by.
     #| C<$object> -- Should an object be returned or not?
-    multi method joinAcross( @dataset, :$by is copy = Whatever, Bool :$object = True ) {
+    multi method join-across(@dataset, :$by is copy = Whatever, Bool :$object = True) {
 
-        my $recs = self.takeValue.Array;
+        my $recs = self.take-value.Array;
 
         if is-array-of-pairs($recs) {
-            return self.joinAcross($recs, @dataset, :$by, :$object)
+            return self.join-across($recs, @dataset, :$by, :$object)
         }
         warn "Object's value is not an array of pairs.";
         return $object ?? self !! Nil;

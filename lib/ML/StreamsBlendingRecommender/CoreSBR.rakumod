@@ -125,18 +125,18 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$naive-parsing> Should the CSV file be parsed with naive assumptions or not?
     #| * C<$sep> Fields separator within a record.
     #| * C<$object> Should the result be an object or not?
-    method ingestSMRMatrixCSVFile(Str $fileName,
-                                  Str :$itemColumnName = 'Item',
-                                  Str :$tagTypeColumnName = 'TagType',
-                                  Str :$valueColumnName = 'Value',
-                                  Str :$weightColumnName = 'Weight',
-                                  Bool :$make = False,
-                                  Bool :$naive-parsing = False,
-                                  Str :$sep = ',',
-                                  Bool :$object = True) {
+    method ingest-smr-marrix-csv-file(Str $fileName,
+                                      Str :$itemColumnName = 'Item',
+                                      Str :$tagTypeColumnName = 'TagType',
+                                      Str :$valueColumnName = 'Value',
+                                      Str :$weightColumnName = 'Weight',
+                                      Bool :$make = False,
+                                      Bool :$naive-parsing = False,
+                                      Str :$sep = ',',
+                                      Bool :$object = True) {
 
-        my $res = self.ingestCSVFile($fileName, %(Item => $itemColumnName, TagType => $tagTypeColumnName,
-                                                  Value => $valueColumnName, Weight => $weightColumnName),
+        my $res = self.ingest-csv-file($fileName, %(Item => $itemColumnName, TagType => $tagTypeColumnName,
+                                                    Value => $valueColumnName, Weight => $weightColumnName),
                 :$naive-parsing, :$sep);
         if not so $res {
             return $object ?? Nil !! False;
@@ -147,18 +147,18 @@ class ML::StreamsBlendingRecommender::CoreSBR
         %!itemInverseIndexes = %();
         %!tagInverseIndexes = %();
 
-        self.makeTagInverseIndexes() when $make;
+        self.make-tag-inverse-indexes() when $make;
 
         return $object ?? self !! True;
     }
-    #| A modified version of this function's code is used in C<LSATopicSBR::ingestLSAMatrixCSVFile>.
+    #| A modified version of this function's code is used in C<LSATopicSBR::ingest-lsa-matrix-csv-file>.
 
     ##========================================================
     ## Make tag inverse indexes
     ##========================================================
     #| Make the inverse indexes that correspond to the SMR matrix.
     #| * C<$object> Should the result be an object or not?
-    multi method makeTagInverseIndexes(Bool :$object = True) {
+    multi method make-tag-inverse-indexes(Bool :$object = True) {
 
         ## Split into a hash by tag type.
         #my %inverseIndexGroups = @.SMRMatrix.classify({ $_<TagType> });
@@ -171,19 +171,21 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         ## Re-make each array of hashes into an item-to-weight hash.
         %inverseIndexesPerTagType =
-                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value.map({ $_<Item> => $_<Weight>.subst(/'.' $/, '.0') })) })) });
+                %inverseIndexesPerTagType.pairs.map({ $_.key => %($_.value.pairs.map({ $_.key => Mix($_.value
+                        .map({ $_<Item> => $_<Weight>.subst(/'.' $/, '.0') })) })) });
 
         ## Make it a hash of hashes of mixes.
         %inverseIndexesPerTagType =
                 Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ Hash($_) }));
 
-        self.makeTagInverseIndexes(%inverseIndexesPerTagType, :$object)
+        self.make-tag-inverse-indexes(%inverseIndexesPerTagType, :$object)
     }
 
-    multi method makeTagInverseIndexes(%inverseIndexesPerTagType, Bool :$object = True) {
+    multi method make-tag-inverse-indexes(%inverseIndexesPerTagType, Bool :$object = True) {
 
         ## Derive the tag type to tags hash map.
-        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys.List }).List);
+        %!tagTypeToTags = Hash(%inverseIndexesPerTagType.keys Z=> %inverseIndexesPerTagType.values.map({ $_.keys.List })
+                .List);
 
         ## Flatten the inverse index groups.
         %!tagInverseIndexes = %();
@@ -213,19 +215,19 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$valueColumnName> Which column is the (tag) value column.
     #| * C<$weightColumnName> Which column is the weight column.
     #| * C<$object> Should the result be an object or not?
-    method makeTagInverseIndexesFromLongForm(@data where is-array-of-hashes(@data),
-                                             Str :$itemColumnName = 'Item',
-                                             Str :$tagTypeColumnName = 'TagType',
-                                             Str :$valueColumnName = 'Value',
-                                             Str :$weightColumnName = 'Weight',
-                                             Bool :$object = True) {
+    method make-tag-inverse-indexes-from-long-form(@data where is-array-of-hashes(@data),
+                                                   Str :$itemColumnName = 'Item',
+                                                   Str :$tagTypeColumnName = 'TagType',
+                                                   Str :$valueColumnName = 'Value',
+                                                   Str :$weightColumnName = 'Weight',
+                                                   Bool :$object = True) {
 
-        self.setSMRMatrix( @data.map({ %( Item => $_{$itemColumnName},
-                                          TagType => $_{$tagTypeColumnName},
-                                          Value => $_{$valueColumnName},
-                                          Weight => $_{$weightColumnName} ) }));
+        self.setSMRMatrix(@data.map({ %( Item => $_{$itemColumnName},
+                                         TagType => $_{$tagTypeColumnName},
+                                         Value => $_{$valueColumnName},
+                                         Weight => $_{$weightColumnName}) }));
 
-        return self.makeTagInverseIndexes(:$object);
+        return self.make-tag-inverse-indexes(:$object);
     }
 
     ##========================================================
@@ -233,7 +235,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     #| Transpose inverse indexes.
     #| * C<$object> Should the result be an object or not?
-    method transposeTagInverseIndexes(Bool :$object = True) {
+    method transpose-tag-inverse-indexes(Bool :$object = True) {
 
         ## WARNING! -- This function has to be refactored to use the role's transpose.
 
@@ -270,12 +272,12 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$addTagTypesToColumnNames> Should the tag types be prefixes of the tags or not?
     #| * C<$sep> Separator between the tag type prefixes and the tags.
     #| * C<$object> Should the result be an object or not?
-    method makeTagInverseIndexesFromWideForm(@data where is-array-of-hashes(@data),
-                                             :$tagTypes = *,
-                                             Str:D :$itemColumnName = @data[0].keys[0],
-                                             Bool :$addTagTypesToColumnNames = True,
-                                             Str:D :$sep = ":",
-                                             Bool :$object = True) {
+    method make-tag-inverse-indexes-from-wide-form(@data where is-array-of-hashes(@data),
+                                                   :$tagTypes = *,
+                                                   Str:D :$itemColumnName = @data[0].keys[0],
+                                                   Bool :$addTagTypesToColumnNames = True,
+                                                   Str:D :$sep = ":",
+                                                   Bool :$object = True) {
 
         ## Get the tag types.
         my Str:D @tagTypesLocal;
@@ -309,7 +311,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         ## Finish the tag inverse index making.
-        self.makeTagInverseIndexes(%matrices, :$object);
+        self.make-tag-inverse-indexes(%matrices, :$object);
     }
 
     ##========================================================
@@ -331,17 +333,17 @@ class ML::StreamsBlendingRecommender::CoreSBR
     multi method profile(Mix:D $items, Bool :$normalize = False, Bool :$object = True, Bool :$warn = True) {
 
         ## Transpose inverse indexes if needed
-        if %!itemInverseIndexes.elems == 0 { self.transposeTagInverseIndexes() }
+        if %!itemInverseIndexes.elems == 0 { self.transpose-tag-inverse-indexes() }
 
-        ## Except the line above the code of this method is same/dual to .recommendByProfile
+        ## Except the line above the code of this method is same/dual to .recommend-by-profile
 
         ## Make sure items are known
         my $itemsQuery = Mix($items{($items (&) $!knownItems).keys}:p);
 
         if $itemsQuery.elems == 0 and $warn {
             warn 'None of the items is known in the recommender.';
-            self.setValue(%());
-            return $object ?? self !! self.takeValue();
+            self.set-value(%());
+            return $object ?? self !! self.take-value();
         }
 
         if $itemsQuery.elems < $items.elems and $warn {
@@ -358,9 +360,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %itemMix.sort({ -$_.value });
 
         ## Result
-        self.setValue(@res);
+        self.set-value(@res);
 
-        return $object ?? self !! self.takeValue();
+        return $object ?? self !! self.take-value();
     }
 
     ##========================================================
@@ -384,8 +386,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
     multi method recommend(Mix:D $items, Numeric:D $nrecs = 12, Bool :$normalize = False, Bool :$object = True,
                            Bool :$warn = True) {
-        ## It is not fast, but it is just easy to compute the profile and call recommendByProfile.
-        self.recommendByProfile(Mix(self.profile($items):!object), $nrecs, :$normalize, :$object, :$warn)
+        ## It is not fast, but it is just easy to compute the profile and call recommend-by-profile.
+        self.recommend-by-profile(Mix(self.profile($items):!object), $nrecs, :$normalize, :$object, :$warn)
     }
 
     ##========================================================
@@ -397,35 +399,35 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$normalize> Should the recommendation scores be normalized or not?
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
-    multi method recommendByProfile(@prof,
-                                    Numeric:D $nrecs = 12,
-                                    Bool :$normalize = False,
-                                    Bool :$object = True,
-                                    Bool :$warn = True) {
-        self.recommendByProfile(Mix(@prof), $nrecs, :$normalize, :$object, :$warn)
+    multi method recommend-by-profile(@prof,
+                                      Numeric:D $nrecs = 12,
+                                      Bool :$normalize = False,
+                                      Bool :$object = True,
+                                      Bool :$warn = True) {
+        self.recommend-by-profile(Mix(@prof), $nrecs, :$normalize, :$object, :$warn)
     }
 
-    multi method recommendByProfile(Str $profTag,
-                                    Numeric:D $nrecs = 12,
-                                    Bool :$normalize = False,
-                                    Bool :$object = True,
-                                    Bool :$warn = True) {
-        self.recommendByProfile(Mix([$profTag]), $nrecs, :$normalize, :$object, :$warn)
+    multi method recommend-by-profile(Str $profTag,
+                                      Numeric:D $nrecs = 12,
+                                      Bool :$normalize = False,
+                                      Bool :$object = True,
+                                      Bool :$warn = True) {
+        self.recommend-by-profile(Mix([$profTag]), $nrecs, :$normalize, :$object, :$warn)
     }
 
-    multi method recommendByProfile(Mix:D $prof,
-                                    Numeric:D $nrecs is copy = 12,
-                                    Bool :$normalize = False,
-                                    Bool :$object = True,
-                                    Bool :$warn = True) {
+    multi method recommend-by-profile(Mix:D $prof,
+                                      Numeric:D $nrecs is copy = 12,
+                                      Bool :$normalize = False,
+                                      Bool :$object = True,
+                                      Bool :$warn = True) {
 
         ## Make sure tags are known
         my $profQuery = Mix($prof{($prof (&) $!knownTags).keys}:p);
 
         if $profQuery.elems == 0 and $warn {
             warn 'None of the profile tags is known in the recommender.';
-            self.setValue(%());
-            return $object ?? self !! self.takeValue();
+            self.set-value(%());
+            return $object ?? self !! self.take-value();
         }
 
         if $profQuery.elems < $prof.elems and $warn {
@@ -436,8 +438,8 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $nrecs < 0 {
             warn 'The second argument is expected to be a positive integer or Inf';
-            self.setValue(%());
-            return $object ?? self !! self.takeValue();
+            self.set-value(%());
+            return $object ?? self !! self.take-value();
         }
 
         ## Compute recommendations
@@ -450,9 +452,9 @@ class ML::StreamsBlendingRecommender::CoreSBR
         my @res = %profMix.sort({ -$_.value }).Array;
 
         ## Result
-        self.setValue(do if $nrecs < @res.elems { @res.head($nrecs).Array } else { @res });
+        self.set-value(do if $nrecs < @res.elems { @res.head($nrecs).Array } else { @res });
 
-        return $object ?? self !! self.takeValue();
+        return $object ?? self !! self.take-value();
     }
 
     ##========================================================
@@ -463,17 +465,17 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$type>  The type of filtering one of "union" or "intersection".
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
-    multi method filterByProfile(Mix:D $prof,
-                                 Str :$type = 'intersection',
-                                 Bool :$object = True,
-                                 Bool :$warn = True) {
-        return self.filterByProfile($prof.keys, :$type, :$object, :$warn);
+    multi method filter-by-profile(Mix:D $prof,
+                                   Str :$type = 'intersection',
+                                   Bool :$object = True,
+                                   Bool :$warn = True) {
+        return self.filter-by-profile($prof.keys, :$type, :$object, :$warn);
     }
 
-    multi method filterByProfile(@prof,
-                                 Str :$type = 'intersection',
-                                 Bool :$object = True,
-                                 Bool :$warn = True) {
+    multi method filter-by-profile(@prof,
+                                   Str :$type = 'intersection',
+                                   Bool :$object = True,
+                                   Bool :$warn = True) {
 
         my %profMix;
         if $type.lc eq 'intersection' {
@@ -486,14 +488,14 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         } else {
             warn 'The value of the type argument is expected to be one of \'intersection\' or \'union\'.' if $warn;
-            self.setValue(%());
-            return $object ?? self !! self.takeValue();
+            self.set-value(%());
+            return $object ?? self !! self.take-value();
         }
 
         ## Result
-        self.setValue(%profMix.keys.Array);
+        self.set-value(%profMix.keys.Array);
 
-        return $object ?? self !! self.takeValue();
+        return $object ?? self !! self.take-value();
     }
 
     ##========================================================
@@ -523,33 +525,33 @@ class ML::StreamsBlendingRecommender::CoreSBR
     #| * C<$object> Should the result be an object or not?
     #| * C<$warn> Should warnings be issued or not?
     #| The result is assigned to C<!value>.
-    #| This function is based on the method C<recommendByProfile> ("should")
-    #| and C<filterByProfile> ("must" and "must not").
-    multi method retrieveByQueryElements(Mix:D $should, $must = (), $mustNot = (),
-                                         Str :$mustType = 'intersection',
-                                         Str :$mustNotType = 'union',
-                                         Bool :$object = True,
-                                         Bool :$warn = True) {
-        return self.retrieveByQueryElements($should.keys, $must, $mustNot, :$mustType, :$mustNotType, :$object, :$warn);
+    #| This function is based on the method C<recommend-by-profile> ("should")
+    #| and C<filter-by-profile> ("must" and "must not").
+    multi method retrieve-by-query-elements(Mix:D $should, $must = (), $mustNot = (),
+                                            Str :$mustType = 'intersection',
+                                            Str :$mustNotType = 'union',
+                                            Bool :$object = True,
+                                            Bool :$warn = True) {
+        return self.retrieve-by-query-elements($should.keys, $must, $mustNot, :$mustType, :$mustNotType, :$object, :$warn);
     }
 
-    multi method retrieveByQueryElements(:$should = (),
-                                         :$must = (),
-                                         :$mustNot = (),
-                                         *%args) {
-        return self.retrieveByQueryElements($should, $must, $mustNot, |%args);
+    multi method retrieve-by-query-elements(:$should = (),
+                                            :$must = (),
+                                            :$mustNot = (),
+                                            *%args) {
+        return self.retrieve-by-query-elements($should, $must, $mustNot, |%args);
     }
 
-    multi method retrieveByQueryElements($should is copy = Whatever,
-                                         $must is copy = (),
-                                         $mustNot is copy = (),
-                                         Str :$mustType = 'intersection',
-                                         Str :$mustNotType = 'union',
-                                         Bool :$object = True,
-                                         Bool :$warn = True) {
+    multi method retrieve-by-query-elements($should is copy = Whatever,
+                                            $must is copy = (),
+                                            $mustNot is copy = (),
+                                            Str :$mustType = 'intersection',
+                                            Str :$mustNotType = 'union',
+                                            Bool :$object = True,
+                                            Bool :$warn = True) {
 
-        if $should.isa(Whatever) && QueryElementSpecQ(self.takeValue) {
-            $should = self.takeValue
+        if $should.isa(Whatever) && QueryElementSpecQ(self.take-value) {
+            $should = self.take-value
         }
 
         $should = QueryElementSpecConvert($should);
@@ -558,15 +560,15 @@ class ML::StreamsBlendingRecommender::CoreSBR
 
         if $should.elems + $must.elems + $mustNot.elems == 0 {
             warn 'All query specifications are empty.' if $warn;
-            self.setValue(());
-            return $object ?? self !! self.takeValue();
+            self.set-value(());
+            return $object ?? self !! self.take-value();
         }
 
         # Should
         my %shouldItems;
         my $recs;
         if $should.elems > 0 || $must.elems > 0 {
-            $recs = self.recommendByProfile([|$should, |$must], Inf, :$warn):!object;
+            $recs = self.recommend-by-profile([|$should, |$must], Inf, :$warn):!object;
             %shouldItems = Mix($recs);
         } else {
             %shouldItems = Mix(self.takeKnownItems);
@@ -577,7 +579,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         # Must
         my %mustItems;
         if $must.elems > 0 {
-            %mustItems = Mix(self.filterByProfile($must, type => $mustType, :$warn):!object);
+            %mustItems = Mix(self.filter-by-profile($must, type => $mustType, :$warn):!object);
         }
 
         if %mustItems.elems > 0 {
@@ -587,7 +589,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         # Must Not
         my %mustNotItems;
         if $mustNot.elems > 0 {
-            %mustNotItems = Mix(self.filterByProfile($mustNot, type => $mustNotType, :$warn):!object);
+            %mustNotItems = Mix(self.filter-by-profile($mustNot, type => $mustNotType, :$warn):!object);
         }
 
         if %mustNotItems.elems > 0 {
@@ -598,12 +600,12 @@ class ML::StreamsBlendingRecommender::CoreSBR
         if $recs.elems > 0 {
             # If profile recommendations were computed we want to use scores.
             my %profRecs = |$recs;
-            self.setValue(%profRecs.grep({ $_.key ∈ %res }).sort({-$_.value}).Array);
+            self.set-value(%profRecs.grep({ $_.key ∈ %res }).sort({ -$_.value }).Array);
         } else {
-            self.setValue(%res.Array);
+            self.set-value(%res.Array);
         }
 
-        return $object ?? self !! self.takeValue();
+        return $object ?? self !! self.take-value();
     }
 
     ##========================================================
@@ -679,7 +681,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         %!tagInverseIndexes = %res;
 
         # This has to be refactored!
-        # Same type coercion is done in makeTagInverseIndexes.
+        # Same type coercion is done in make-tag-inverse-indexes.
         %!tagInverseIndexes = %!tagInverseIndexes.map({ $_.key => $_.value.Mix });
 
         ## We make sure item inverse indexes are empty.
@@ -779,7 +781,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         # Result
-        self.setValue(%!globalWeights);
+        self.set-value(%!globalWeights);
 
         return $object ?? self !! %!globalWeights;
     }
@@ -817,11 +819,11 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         # Compute the recommendations
-        my %recs = self.recommendByProfile($profile, $n-top-nearest-neighbors, warn => !$ignore-unknown):!object;
+        my %recs = self.recommend-by-profile($profile, $n-top-nearest-neighbors, warn => !$ignore-unknown):!object;
 
         # "Nothing" result
         if %recs.elems == 0 {
-            self.setValue({});
+            self.set-value({});
             return $object ?? self !! {};
         }
 
@@ -838,7 +840,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         ## Get scores
-        if !%!itemInverseIndexes { self.transposeTagInverseIndexes }
+        if !%!itemInverseIndexes { self.transpose-tag-inverse-indexes }
         my %clRecs = [(+)] %!itemInverseIndexes{%recs.keys} Z<<*>> %recs.values;
         %clRecs = %clRecs.grep({ $_.key ∈ %!tagTypeToTags{$tagType} }).cache;
 
@@ -861,7 +863,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         }
 
         # Result
-        self.setValue(@clRecs);
+        self.set-value(@clRecs);
 
         return $object ?? self !! @clRecs;
     }
