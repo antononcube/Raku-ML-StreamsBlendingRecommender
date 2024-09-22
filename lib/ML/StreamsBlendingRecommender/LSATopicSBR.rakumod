@@ -83,7 +83,7 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
             return Nil
         }
 
-        self.setGlobalWeights(@global-weights.map({ $_{$wordColumnName} => +$_{$weightColumnName} }).Hash);
+        self.set-global-weights(@global-weights.map({ $_{$wordColumnName} => +$_{$weightColumnName} }).Hash);
 
         if $object { self } else { True }
     }
@@ -137,9 +137,9 @@ class ML::StreamsBlendingRecommender::LSATopicSBR
         }
 
         ## Apply global weights
-        if self.takeGlobalWeights.elems > 0 {
+        if self.take-global-weights.elems > 0 {
             %bag = do for %bag.kv -> $word, $count {
-                if self.takeGlobalWeights{$word}:exists { $word => $count * self.takeGlobalWeights{$word} }
+                if self.take-global-weights{$word}:exists { $word => $count * self.take-global-weights{$word} }
             }
         }
 

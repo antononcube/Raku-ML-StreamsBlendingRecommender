@@ -25,31 +25,31 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Setters
     ##========================================================
-    method setSMRMatrix(@arg) {
+    method set-smr-matrix(@arg) {
         @.SMRMatrix = @arg;
         self
     }
-    method setItemInverseIndexes(%arg) {
+    method set-item-inverse-indexes(%arg) {
         %!itemInverseIndexes = %arg;
         self
     }
-    method setTagInverseIndexes(%arg) {
+    method set-tag-inverse-indexes(%arg) {
         %!tagInverseIndexes = %arg;
         self
     }
-    method setTagTypeToTags(%arg) {
+    method set-tag-type-to-tags(%arg) {
         %!tagTypeToTags = %arg;
         self
     }
-    method setGlobalWeights(%arg) {
+    method set-global-weights(%arg) {
         %!globalWeights = %arg;
         self
     }
-    method setKnownTags($arg) {
+    method set-known-tags($arg) {
         $!knownTags = $arg;
         self
     }
-    method setKnownItems($arg) {
+    method set-known-items($arg) {
         $!knownItems = $arg;
         self
     }
@@ -58,25 +58,25 @@ class ML::StreamsBlendingRecommender::CoreSBR
     ##========================================================
     ## Takers
     ##========================================================
-    method takeSMRMatrix() {
+    method take-smr-matrix() {
         @.SMRMatrix
     }
-    method takeItemInverseIndexes() {
+    method take-item-inverse-indexes() {
         %!itemInverseIndexes
     }
-    method takeTagInverseIndexes() {
+    method take-tag-inverse-indexes() {
         %!tagInverseIndexes
     }
-    method takeTagTypeToTags() {
+    method take-tag-type-to-tags() {
         %!tagTypeToTags
     }
-    method takeGlobalWeights() {
+    method take-global-weights() {
         %!globalWeights
     }
-    method takeKnownTags() {
+    method take-known-tags() {
         $!knownTags
     }
-    method takeKnownItems() {
+    method take-known-items() {
         $!knownItems
     }
 
@@ -108,7 +108,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
                         :$!knownItems,
                         :$.value
                         );
-        ## say "clone:", $cloneObj.takeTagInverseIndexes().elems;
+        ## say "clone:", $cloneObj.take-tag-inverse-indexes().elems;
         $cloneObj
     }
 
@@ -142,7 +142,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
             return $object ?? Nil !! False;
         }
 
-        self.setSMRMatrix($res);
+        self.set-smr-matrix($res);
 
         %!itemInverseIndexes = %();
         %!tagInverseIndexes = %();
@@ -167,7 +167,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
         #my %inverseIndexesPerTagType = %inverseIndexGroups.pairs.map({ $_.key => $_.value.classify({ $_<Value> }) });
 
         ## The following line does what the commented out lines above do.
-        my Hash %inverseIndexesPerTagType = self.takeSMRMatrix.classify({ $_<TagType Value> });
+        my Hash %inverseIndexesPerTagType = self.take-smr-matrix.classify({ $_<TagType Value> });
 
         ## Re-make each array of hashes into an item-to-weight hash.
         %inverseIndexesPerTagType =
@@ -222,7 +222,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
                                                    Str :$weightColumnName = 'Weight',
                                                    Bool :$object = True) {
 
-        self.setSMRMatrix(@data.map({ %( Item => $_{$itemColumnName},
+        self.set-smr-matrix(@data.map({ %( Item => $_{$itemColumnName},
                                          TagType => $_{$tagTypeColumnName},
                                          Value => $_{$valueColumnName},
                                          Weight => $_{$weightColumnName}) }));
@@ -572,7 +572,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
             $recs = self.recommend-by-profile([|$should, |$must], Inf, :$warn):!object;
             %shouldItems = Mix($recs);
         } else {
-            %shouldItems = Mix(self.takeKnownItems);
+            %shouldItems = Mix(self.take-known-items);
         }
 
         my %res = %shouldItems;
