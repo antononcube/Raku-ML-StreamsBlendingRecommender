@@ -1,7 +1,6 @@
 use v6.d;
 
-use lib './lib';
-use lib '.';
+use lib <. lib>;
 
 use ML::StreamsBlendingRecommender::CoreSBR;
 use Data::Reshapers;
@@ -19,19 +18,19 @@ my @dsTitanic = Data::Reshapers::get-titanic-dataset(headers => 'auto');
 my ML::StreamsBlendingRecommender::CoreSBR $sbrObj .= new;
 
 ## 1
-ok $sbrObj.makeTagInverseIndexesFromWideForm(
+ok $sbrObj.make-tag-inverse-indexes-from-wide-form(
         @dsTitanic,
         tagTypes => @dsTitanic[0].keys.grep({ $_ ne 'id' }).Array,
         itemColumnName => <id>,
-        :!addTagTypesToColumnNames).transposeTagInverseIndexes,
+        :!addTagTypesToColumnNames).transpose-tag-inverse-indexes,
         'Ingest SMR matrix from CSV file';
 
 ## 2
-is $sbrObj.takeTagInverseIndexes.elems == 17, True,
+is $sbrObj.take-tag-inverse-indexes.elems == 17, True,
         'Expected number of tags';
 
 ## 3
-is $sbrObj.takeItemInverseIndexes.elems ≥ 1309, True,
+is $sbrObj.take-item-inverse-indexes.elems ≥ 1309, True,
         'Expected number of items';
 
 ##-----------------------------------------------------------
@@ -40,11 +39,11 @@ is $sbrObj.takeItemInverseIndexes.elems ≥ 1309, True,
 my @prof = <male 3rd>;
 
 ## 4
-ok $sbrObj.recommendByProfile(@prof, 10, :normalize, :!object),
+ok $sbrObj.recommend-by-profile(@prof, 10, :normalize, :!object),
         'Recommend by profile';
 
 ## 5
-my %recs = $sbrObj.recommendByProfile(@prof, 10, :normalize, :!object);
+my %recs = $sbrObj.recommend-by-profile(@prof, 10, :normalize, :!object);
 ok %recs.elems == 10, 'recs.elems';
 
 
@@ -60,7 +59,7 @@ ok %recs.elems == 10, 'recs.elems';
 # Also,
 
 ## 6
-my %recs2 = $sbrObj.classifyByProfile('passengerSurvival', @prof, n-top-nearest-neighbors => 50, :!normalize, :!object);
+my %recs2 = $sbrObj.classify-by-profile('passengerSurvival', @prof, n-top-nearest-neighbors => 50, :!normalize, :!object);
 is %recs2<died> ≥ 2 * %recs2<survived>, True, 'Expected classification distribution';
 
 done-testing;

@@ -1,6 +1,7 @@
 use v6;
-use lib './lib';
-use lib '.';
+
+use lib <. lib>;
+
 use ML::StreamsBlendingRecommender::CoreSBR;
 use Test;
 
@@ -16,7 +17,7 @@ my $sbrCore = ML::StreamsBlendingRecommender::CoreSBR.new;
 
 ok $fileName.chars > 0, '$fileNameIDF';
 
-ok $sbrCore.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+ok $sbrCore.ingest-smr-marrix-csv-file($fileName, :make).take-smr-matrix.elems > 3000,
         'ingest SMR matrix from CSV file';
 
 
@@ -24,7 +25,7 @@ ok $sbrCore.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
 ## Recommendations by profile
 ##-----------------------------------------------------------
 my @prof = <ApplicationArea:Aviation DataType:TimeSeries>;
-my %recsIDF = $sbrCore.recommendByProfile(@prof, 10, :normalize, :!object);
+my %recsIDF = $sbrCore.recommend-by-profile(@prof, 10, :normalize, :!object);
 
 ok %recsIDF.elems == 10, 'recsIDF.elems';
 

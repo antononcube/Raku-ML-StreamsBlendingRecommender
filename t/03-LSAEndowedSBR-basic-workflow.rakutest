@@ -1,7 +1,6 @@
 use v6.d;
 
-use lib './lib';
-use lib '.';
+use lib <. lib>;
 
 use ML::StreamsBlendingRecommender::CoreSBR;
 use ML::StreamsBlendingRecommender::LSATopicSBR;
@@ -21,7 +20,7 @@ my $sbrCore = ML::StreamsBlendingRecommender::CoreSBR.new;
 
 ok $fileName.chars > 0, '$fileNameIDF';
 
-ok $sbrCore.ingestSMRMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+ok $sbrCore.ingest-smr-marrix-csv-file($fileName, :make).take-smr-matrix.elems > 3000,
         'ingest SMR matrix from CSV file';
 
 ##===========================================================
@@ -36,24 +35,24 @@ my $sbrLSA = ML::StreamsBlendingRecommender::LSATopicSBR.new;
 
 ok $fileName.chars > 0, '$fileNameIDF';
 
-ok $sbrLSA.ingestLSAMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+ok $sbrLSA.ingest-lsa-matrix-csv-file($fileName, :make).take-smr-matrix.elems > 3000,
         'ingest LSA matrix from CSV file';
 
 ##-----------------------------------------------------------
 ## Global weights
 $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfLSAWordGlobalWeights.csv';
 
-is $sbrLSA.ingestGlobalWeightsCSVFile($fileName, :!object), True,
+is $sbrLSA.ingest-global-weights-csv-file($fileName, :!object), True,
         'ingest global weights from CSV file';
 
-is $sbrLSA.takeGlobalWeights.elems > 1000, True,
+is $sbrLSA.take-global-weights.elems > 1000, True,
         'numbef of global weights';
 
 ##-----------------------------------------------------------
 ## Stem rules
 $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfStemRules.csv';
 
-is $sbrLSA.ingestStemRulesCSVFile($fileName, :!object), True,
+is $sbrLSA.ingest-stem-rules-csv-file($fileName, :!object), True,
         'ingest stem rules from CSV file';
 
 is $sbrLSA.takeStemRules.elems > 1000, True,
@@ -72,7 +71,7 @@ my $sbrWLExampleData = ML::StreamsBlendingRecommender::LSAEndowedSBR.new(Core=>$
 my $prof = <ApplicationArea:Aviation DataType:TimeSeries>;
 my $query = "titanic survival data records";
 
-my @qbag = |$sbrWLExampleData.recommendByProfile($prof, $query, 10, :!object);
+my @qbag = |$sbrWLExampleData.recommend-by-profile($prof, $query, 10, :!object);
 
 is @qbag.elems >= 3, True, 'recommend by profile and text';
 

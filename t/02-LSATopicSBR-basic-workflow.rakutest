@@ -1,6 +1,5 @@
 use v6;
-use lib './lib';
-use lib '.';
+use lib <. lib>;
 use ML::StreamsBlendingRecommender::LSATopicSBR;
 use Test;
 
@@ -18,24 +17,24 @@ my $sbrWLExampleDataTopics = ML::StreamsBlendingRecommender::LSATopicSBR.new;
 
 ok $fileName.chars > 0, '$fileNameIDF';
 
-ok $sbrWLExampleDataTopics.ingestLSAMatrixCSVFile($fileName, :make).takeSMRMatrix.elems > 3000,
+ok $sbrWLExampleDataTopics.ingest-lsa-matrix-csv-file($fileName, :make).take-smr-matrix.elems > 3000,
         'ingest LSA matrix from CSV file';
 
 ##-----------------------------------------------------------
 ## Global weights
 $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfLSAWordGlobalWeights.csv';
 
-is $sbrWLExampleDataTopics.ingestGlobalWeightsCSVFile($fileName, :!object), True,
+is $sbrWLExampleDataTopics.ingest-global-weights-csv-file($fileName, :!object), True,
         'ingest global weights from CSV file';
 
-is $sbrWLExampleDataTopics.takeGlobalWeights.elems > 1000, True,
+is $sbrWLExampleDataTopics.take-global-weights.elems > 1000, True,
         'numbef of global weights';
 
 ##-----------------------------------------------------------
 ## Stem rules
 $fileName = $*CWD.Str ~ '/resources/' ~ 'WLExampleData-dfStemRules.csv';
 
-is $sbrWLExampleDataTopics.ingestStemRulesCSVFile($fileName, :!object), True,
+is $sbrWLExampleDataTopics.ingest-stem-rules-csv-file($fileName, :!object), True,
         'ingest stem rules from CSV file';
 
 is $sbrWLExampleDataTopics.takeStemRules.elems > 1000, True,
@@ -47,7 +46,7 @@ is $sbrWLExampleDataTopics.takeStemRules.elems > 1000, True,
 ##-----------------------------------------------------------
 my $query = "airline time series";
 
-my @qbag = |$sbrWLExampleDataTopics.representByTerms($query, :!object);
+my @qbag = |$sbrWLExampleDataTopics.represent-by-terms($query, :!object);
 
 is @qbag.elems >= 3, True, 'represent by terms';
 
@@ -57,7 +56,7 @@ is @qbag.elems >= 3, True, 'represent by terms';
 ##-----------------------------------------------------------
 my $query2 = "airline time series";
 
-my @qbag2 = |$sbrWLExampleDataTopics.representByTopics($query2, :!object);
+my @qbag2 = |$sbrWLExampleDataTopics.represent-by-topics($query2, :!object);
 
 is @qbag2.elems >= 3, True, 'represent by topics';
 
@@ -67,7 +66,7 @@ is @qbag2.elems >= 3, True, 'represent by topics';
 ##-----------------------------------------------------------
 my $query3 = "titanic survival data records";
 
-my @qbag3 = |$sbrWLExampleDataTopics.recommendByText($query3, :!object);
+my @qbag3 = |$sbrWLExampleDataTopics.recommend-by-text($query3, :!object);
 
 is @qbag3.elems >= 3, True, 'recommend by text';
 
