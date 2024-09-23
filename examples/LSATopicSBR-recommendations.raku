@@ -1,6 +1,6 @@
 #!/usr/bin/env perl6
-use lib './lib';
-use lib '.';
+use lib <. lib>;
+
 use ML::StreamsBlendingRecommender::LSAEndowedSBR;
 
 ##===========================================================
@@ -10,25 +10,25 @@ my Str $fileName = $*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfLSATopicWordMatr
 
 my $sbrLSAObj = ML::StreamsBlendingRecommender::LSATopicSBR.new;
 
-$sbrLSAObj.ingestLSAMatrixCSVFile($fileName);
-$sbrLSAObj.ingestGlobalWeightsCSVFile($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfLSAWordGlobalWeights.csv');
-$sbrLSAObj.ingestStemRulesCSVFile($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfStemRules.csv');
+$sbrLSAObj.ingest-lsa-matrix-csv-file($fileName);
+$sbrLSAObj.ingest-global-weights-csv-file($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfLSAWordGlobalWeights.csv');
+$sbrLSAObj.ingest-stem-rules-csv-file($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfStemRules.csv');
 
-say '$sbrLSAObj.takeSMRMatrix.elems = ', $sbrLSAObj.takeSMRMatrix.elems;
+say '$sbrLSAObj.take-smr-matrix.elems = ', $sbrLSAObj.take-smr-matrix.elems;
 
-$sbrLSAObj.makeTagInverseIndexes();
+$sbrLSAObj.make-tag-inverse-indexes();
 
-say '$sbrLSAObj.takeTagTypeToTags(): ', $sbrLSAObj.takeTagTypeToTags();
+say '$sbrLSAObj.take-tag-type-to-tags(): ', $sbrLSAObj.take-tag-type-to-tags();
 
-#$sbrLSAObj.normalizePerTagType( 'cosine' );
+#$sbrLSAObj.normalize-per-tag-type( 'cosine' );
 
-say '$sbrLSAObj.takeInverseIndexes.elems = ', $sbrLSAObj.takeTagInverseIndexes.elems;
+say '$sbrLSAObj.takeInverseIndexes.elems = ', $sbrLSAObj.take-tag-inverse-indexes.elems;
 
-say '$sbrLSAObj.takeInverseIndexes.keys = ', $sbrLSAObj.takeTagInverseIndexes.keys;
+say '$sbrLSAObj.takeInverseIndexes.keys = ', $sbrLSAObj.take-tag-inverse-indexes.keys;
 
 say "-" x 60;
 
-my $recs = $sbrLSAObj.recommendByText("ozone in los angelis", 10):!object;
+my $recs = $sbrLSAObj.recommend-by-text("ozone in los angelis", 10):!object;
 
 say $recs;
 
@@ -37,25 +37,25 @@ say "=" x 60;
 
 my $sbrCoreObj = ML::StreamsBlendingRecommender::CoreSBR.new;
 
-$sbrCoreObj.ingestSMRMatrixCSVFile($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfSMRMatrix.csv');
+$sbrCoreObj.ingest-smr-marrix-csv-file($*CWD.Str ~ '/resources/' ~ $datasetID ~ '-dfSMRMatrix.csv');
 
-say '$sbrCoreObj.takeSMRMatrix.elems = ', $sbrCoreObj.takeSMRMatrix.elems;
+say '$sbrCoreObj.take-smr-matrix.elems = ', $sbrCoreObj.take-smr-matrix.elems;
 
-$sbrCoreObj.makeTagInverseIndexes();
+$sbrCoreObj.make-tag-inverse-indexes();
 
-say '$sbrCoreObj.takeTagTypeToTags(): ', $sbrCoreObj.takeTagTypeToTags();
+say '$sbrCoreObj.take-tag-type-to-tags(): ', $sbrCoreObj.take-tag-type-to-tags();
 
-#$sbrLSAObj.normalizePerTagType( 'cosine' );
+#$sbrLSAObj.normalize-per-tag-type( 'cosine' );
 
-say '$sbrCoreObj.takeInverseIndexes.elems = ', $sbrCoreObj.takeTagInverseIndexes.elems;
+say '$sbrCoreObj.takeInverseIndexes.elems = ', $sbrCoreObj.take-tag-inverse-indexes.elems;
 
-say '$sbrCoreObj.takeInverseIndexes.keys = ', $sbrCoreObj.takeTagInverseIndexes.keys;
+say '$sbrCoreObj.takeInverseIndexes.keys = ', $sbrCoreObj.take-tag-inverse-indexes.keys;
 
 
 say "-" x 60;
 
-#my $recs2 = $sbrCoreObj.recommendByProfile(["Good:milk", "Country:denmark", "UserID:frehvojwf"], 10):!object;
-my $recs2 = $sbrCoreObj.recommendByProfile(["ApplicationArea:Chemistry", "DataType:MultivariateSample"], 10):!object:normalize;
+#my $recs2 = $sbrCoreObj.recommend-by-profile(["Good:milk", "Country:denmark", "UserID:frehvojwf"], 10):!object;
+my $recs2 = $sbrCoreObj.recommend-by-profile(["ApplicationArea:Chemistry", "DataType:MultivariateSample"], 10):!object:normalize;
 
 say $recs2;
 
@@ -68,7 +68,7 @@ $sbrWithLSAObj.Core = $sbrCoreObj;
 $sbrWithLSAObj.LSA = $sbrLSAObj;
 
 #my $recs3 =
-#        $sbrWithLSAObj.recommendByProfile(
+#        $sbrWithLSAObj.recommend-by-profile(
 #                ["Good:milk", "Country:denmark", "UserID:frehvojwf"],
 #                "perambulate formic acquired",
 #                10):!object;
@@ -77,12 +77,12 @@ my $tagsQuery =  <ApplicationArea:Aviation DataType:TimeSeries>;
 my $query = 'airline time series';
 
 say "-" x 30;
-say "Represent by terms:  ", $sbrLSAObj.representByTerms($query):!object;
+say "Represent by terms:  ", $sbrLSAObj.represent-by-terms($query):!object;
 
 say "-" x 30;
-say "Represent by topics: ", $sbrLSAObj.representByTopics($query,):!object;
+say "Represent by topics: ", $sbrLSAObj.represent-by-topics($query,):!object;
 
 say "-" x 30;
-my $recs3 = $sbrWithLSAObj.recommendByProfile( $tagsQuery, $query, 10, profileNormalizer => 'euclidean' ):!object;
+my $recs3 = $sbrWithLSAObj.recommend-by-profile( $tagsQuery, $query, 10, profileNormalizer => 'euclidean' ):!object;
 
 say $recs3;
