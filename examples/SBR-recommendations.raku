@@ -1,6 +1,6 @@
 #!/usr/bin/env perl6
-use lib './lib';
-use lib '.';
+use lib <. lib>;
+
 use ML::StreamsBlendingRecommender;
 use ML::StreamsBlendingRecommender::CoreSBR;
 
@@ -15,20 +15,20 @@ my Str $fileName =  $*CWD.Str ~ '/resources/' ~ 'RandomGoods-dfSMRMatrix.csv';
 
 my $sbrObj = ML::StreamsBlendingRecommender::CoreSBR.new;
 
-$sbrObj.ingestSMRMatrixCSVFile($fileName, :make);
+$sbrObj.ingest-smr-marrix-csv-file($fileName, :make);
 
-#say '$sbrObj.takeSMRMatrix.elems = ', $sbrObj.takeSMRMatrix.elems;
+#say '$sbrObj.take-smr-matrix.elems = ', $sbrObj.take-smr-matrix.elems;
 #
-#say '$sbrObj.takeTagInverseIndexes().elems = ', $sbrObj.takeTagInverseIndexes().elems;
+#say '$sbrObj.take-tag-inverse-indexes().elems = ', $sbrObj.take-tag-inverse-indexes().elems;
 #
-#say '$sbrObj.takeTagTypeToTags(): ', $sbrObj.takeTagTypeToTags();
+#say '$sbrObj.take-tag-type-to-tags(): ', $sbrObj.take-tag-type-to-tags();
 
-#$sbrObj.normalizePerTagTypePerItem( 'cosine' );
+#$sbrObj.normalize-per-tag-type-per-item( 'cosine' );
 
-say "Expected to be 0: ", $sbrObj.takeItemInverseIndexes().elems == 0;
+say "Expected to be 0: ", $sbrObj.take-item-inverse-indexes().elems == 0;
 
-#$sbrObj.transposeTagInverseIndexes();
-#say '$sbrObj.takeItemInverseIndexes(): ', $sbrObj.takeItemInverseIndexes();
+#$sbrObj.transpose-tag-inverse-indexes();
+#say '$sbrObj.take-item-inverse-indexes(): ', $sbrObj.take-item-inverse-indexes();
 
 ## RandomGoods SMR
 say 'profile:', $sbrObj.profile(<lummox-1>):!object;
@@ -37,10 +37,10 @@ say 'profile:', $sbrObj.profile(<lummox-1>):!object;
 #
 say $sbrObj.recommend(Mix('diametrical-1' => 1), 10, :!object, :!normalize);
 
-say $sbrObj.recommendByProfile(Mix("Good:milk" => 1, "Country:denmark" => 1), :!object, :!normalize);
+say $sbrObj.recommend-by-profile(Mix("Good:milk" => 1, "Country:denmark" => 1), :!object, :!normalize);
 
 ## Titanic SMR
-#say 'profile:', $sbrObj.profile(['id.101']).takeValue;
+#say 'profile:', $sbrObj.profile(['id.101']).take-value;
 #
 #say $sbrObj.profile(Mix('id.101' => 1, 'id.216' => 0.5), :!object, :normalize);
 #
