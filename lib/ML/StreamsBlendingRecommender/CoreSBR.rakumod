@@ -106,7 +106,7 @@ class ML::StreamsBlendingRecommender::CoreSBR
                         :%!globalWeights,
                         :$!knownTags,
                         :$!knownItems,
-                        :$.value
+                        value => self.take-value
                         );
         ## say "clone:", $cloneObj.take-tag-inverse-indexes().elems;
         $cloneObj
