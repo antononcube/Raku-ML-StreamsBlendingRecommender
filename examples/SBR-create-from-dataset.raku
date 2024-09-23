@@ -1,7 +1,6 @@
 #!/usr/bin/env perl6
 
-use lib './lib';
-use lib '.';
+use lib <. lib>;
 use ML::StreamsBlendingRecommender::CoreSBR;
 
 use Data::Reshapers;
@@ -15,15 +14,15 @@ say @titanic[0].keys.grep({ $_ ne 'id' });
 
 my ML::StreamsBlendingRecommender::CoreSBR $sbrObj .= new;
 
-$sbrObj.makeTagInverseIndexesFromWideForm( @titanic, tagTypes => @titanic[0].keys.grep({ $_ ne 'id' }).Array, itemColumnName => <id> );
+$sbrObj.make-tag-inverse-indexes-from-wide-form( @titanic, tagTypes => @titanic[0].keys.grep({ $_ ne 'id' }).Array, itemColumnName => <id> );
 
-say 'globalWeights : ', $sbrObj.globalWeights('IDF'):!object;
+say 'global-weights : ', $sbrObj.global-weights('IDF'):!object;
 
-say '$sbrObj.takeTagInverseIndexes().keys :', $sbrObj.takeTagInverseIndexes().keys;
+say '$sbrObj.take-tag-inverse-indexes().keys :', $sbrObj.take-tag-inverse-indexes().keys;
 
-say '$sbrObj.takeTagInverseIndexes() :', $sbrObj.takeTagInverseIndexes();
+say '$sbrObj.take-tag-inverse-indexes() :', $sbrObj.take-tag-inverse-indexes();
 
-my $recs = $sbrObj.recommendByProfile( ["passengerClass:1st", "passengerSex:male"], 1000):!object;
+my $recs = $sbrObj.recommend-by-profile( ["passengerClass:1st", "passengerSex:male"], 1000):!object;
 
 say $recs;
 
