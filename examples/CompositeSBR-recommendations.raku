@@ -1,6 +1,6 @@
 #!/usr/bin/env perl6
-use lib './lib';
-use lib '.';
+use lib <. lib>;
+
 use ML::StreamsBlendingRecommender::CoreSBR;
 use ML::StreamsBlendingRecommender::CompositeSBR;
 
@@ -8,34 +8,34 @@ use ML::StreamsBlendingRecommender::CompositeSBR;
 my Str $fileName =  $*CWD.Str ~ '/resources/' ~ 'dfSMRMatrixTitanic-Freq.csv';
 
 my $sbrObj = ML::StreamsBlendingRecommender::CoreSBR.new;
-$sbrObj.ingestSMRMatrixCSVFile($fileName, :make);
+$sbrObj.ingest-smr-marrix-csv-file($fileName, :make);
 
 #my $sbrObj2 = ML::StreamsBlendingRecommender::CoreSBR.new;
-#$sbrObj2.ingestSMRMatrixCSVFile($fileName, :make);
+#$sbrObj2.ingest-smr-marrix-csv-file($fileName, :make);
 my $sbrObj2 = $sbrObj.clone();
-say '$sbrObj2.takeTagInverseIndexes().elems = ', $sbrObj2.takeTagInverseIndexes().elems;
+say '$sbrObj2.take-tag-inverse-indexes().elems = ', $sbrObj2.take-tag-inverse-indexes().elems;
 
-say '$sbrObj2.takeTagTypeToTags(): ', $sbrObj2.takeTagTypeToTags();
+say '$sbrObj2.take-tag-type-to-tags(): ', $sbrObj2.take-tag-type-to-tags();
 
 say "-" x 30;
 
-say '$sbrObj.takeSMRMatrix.elems = ', $sbrObj.takeSMRMatrix.elems;
+say '$sbrObj.take-smr-matrix.elems = ', $sbrObj.take-smr-matrix.elems;
 
-say '$sbrObj.takeTagInverseIndexes().elems = ', $sbrObj.takeTagInverseIndexes().elems;
+say '$sbrObj.take-tag-inverse-indexes().elems = ', $sbrObj.take-tag-inverse-indexes().elems;
 
-say '$sbrObj.takeTagTypeToTags(): ', $sbrObj.takeTagTypeToTags();
+say '$sbrObj.take-tag-type-to-tags(): ', $sbrObj.take-tag-type-to-tags();
 
-$sbrObj.removeTagTypes(['passengerClass']);
+$sbrObj.remove-tag-types(['passengerClass']);
 
-say '$sbrObj.takeTagInverseIndexes().elems = ', $sbrObj.takeTagInverseIndexes().elems;
+say '$sbrObj.take-tag-inverse-indexes().elems = ', $sbrObj.take-tag-inverse-indexes().elems;
 
-say '$sbrObj.takeTagTypeToTags(): ', $sbrObj.takeTagTypeToTags();
+say '$sbrObj.take-tag-type-to-tags(): ', $sbrObj.take-tag-type-to-tags();
 
-$sbrObj2.removeTagTypes(['passengerAge', 'passengerSex']);
+$sbrObj2.remove-tag-types(['passengerAge', 'passengerSex']);
 
-say '$sbrObj2.takeTagInverseIndexes().elems = ', $sbrObj2.takeTagInverseIndexes().elems;
+say '$sbrObj2.take-tag-inverse-indexes().elems = ', $sbrObj2.take-tag-inverse-indexes().elems;
 
-say '$sbrObj2.takeTagTypeToTags(): ', $sbrObj2.takeTagTypeToTags();
+say '$sbrObj2.take-tag-type-to-tags(): ', $sbrObj2.take-tag-type-to-tags();
 
 my $sbrCompObj = ML::StreamsBlendingRecommender::CompositeSBR.new();
 
@@ -43,14 +43,14 @@ $sbrCompObj.objects.push("First"=>$sbrObj);
 $sbrCompObj.objects.push("Second"=>$sbrObj2);
 $sbrCompObj.weights.push( { "First" => 1, "Second" => 0.6} );
 
-say $sbrObj.recommendByProfile( ["male", "3rd", "survived"], 20, :!object);
+say $sbrObj.recommend-by-profile( ["male", "3rd", "survived"], 20, :!object);
 
 say "-" x 30;
 
-say $sbrCompObj.recommendByProfile( ["male", "3rd", "survived"], 20, Nil, :!object);
+say $sbrCompObj.recommend-by-profile( ["male", "3rd", "survived"], 20, Nil, :!object);
 
 say "-" x 30;
 
-say $sbrCompObj.recommendByProfile( ["male", "3rd", "survived"], 20, 'euclidean', :!object);
+say $sbrCompObj.recommend-by-profile( ["male", "3rd", "survived"], 20, 'euclidean', :!object);
 
 say "-" x 30;
